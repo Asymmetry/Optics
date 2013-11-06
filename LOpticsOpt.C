@@ -38,6 +38,8 @@
 #include "TVector3.h"
 #include "TLine.h"
 #include "TArrow.h"
+#include "TMath.h"
+#include "TString.h"
 
 #include "THaGlobals.h"
 #include "THaEvData.h"
@@ -125,14 +127,14 @@ Int_t LOpticsOpt::LoadDataBase(TString DataBaseName) {
 
     bool found = false;
     while (!found && fgets(buff, LEN, file) != NULL) {
-        //read in comments
+        // read in comments
         TString line = buff;
         if (line.BeginsWith("#")) {
             OldComments += line;
             // OldComments += "\n";
         }
 
-        line = ::Compress(buff); //strip blanks
+        line = ::Compress(buff); // strip blanks
         if (line.EndsWith("\n")) line.Chop();
 
         line.ToLower();
@@ -247,7 +249,7 @@ Int_t LOpticsOpt::LoadDataBase(TString DataBaseName) {
             return kInitError;
         }
 
-        //order optimize to
+        // order optimize to
         ME.OptOrder = atoi(line_spl[line_spl.size() - 1].c_str());
 
         // Don't bother with all-zero matrix elements
@@ -286,29 +288,29 @@ Int_t LOpticsOpt::LoadDataBase(TString DataBaseName) {
             Warning(Here(here), "Not storing matrix for: %s !", w);
     }
 
-    //   // Compute derived quantities and set some hardcoded parameters
-    //   const Double_t degrad = TMath::Pi()/180.0;
-    //   fTan_vdc  = fFPMatrixElems[T000].poly[0];
-    //   fVDCAngle = TMath::ATan(fTan_vdc);
-    //   fSin_vdc  = TMath::Sin(fVDCAngle);
-    //   fCos_vdc  = TMath::Cos(fVDCAngle);
+    //    // Compute derived quantities and set some hardcoded parameters
+    //    const Double_t degrad = TMath::Pi() / 180.0;
+    //    fTan_vdc = fFPMatrixElems[T000].poly[0];
+    //    fVDCAngle = TMath::ATan(fTan_vdc);
+    //    fSin_vdc = TMath::Sin(fVDCAngle);
+    //    fCos_vdc = TMath::Cos(fVDCAngle);
     //
-    //   // Define the VDC coordinate axes in the "detector system". By definition,
-    //   // the detector system is identical to the VDC origin in the Hall A HRS.
-    //   DefineAxes(0.0*degrad);
+    //    // Define the VDC coordinate axes in the "detector system". By definition,
+    //    // the detector system is identical to the VDC origin in the Hall A HRS.
+    //    DefineAxes(0.0 * degrad);
     //
-    //   fNumIter = 1;      // Number of iterations for FineTrack()
-    //   fErrorCutoff = 1e100;
+    //    fNumIter = 1; // Number of iterations for FineTrack()
+    //    fErrorCutoff = 1e100;
     //
-    //   // figure out the track length from the origin to the s1 plane
+    //    // figure out the track length from the origin to the s1 plane
     //
-    //   // since we take the VDC to be the origin of the coordinate
-    //   // space, this is actually pretty simple
-    //   const THaDetector* s1 = GetApparatus()->GetDetector("s1");
-    //   if(s1 == NULL)
-    //     fCentralDist = 0;
-    //   else
-    //     fCentralDist = s1->GetOrigin().Z();
+    //    // since we take the VDC to be the origin of the coordinate
+    //    // space, this is actually pretty simple
+    //    const THaDetector* s1 = GetApparatus()->GetDetector("s1");
+    //    if (s1 == NULL)
+    //        fCentralDist = 0;
+    //    else
+    //        fCentralDist = s1->GetOrigin().Z();
 
     CalcMatrix(1., fLMatrixElems); // tensor without explicit polynomial in x_fp
 
@@ -318,8 +320,8 @@ Int_t LOpticsOpt::LoadDataBase(TString DataBaseName) {
 }
 
 Int_t LOpticsOpt::SaveDataBase(TString DataBaseName) {
-    //output database in memory to new database file
-    //WARNING: Hard coded text included
+    // Output database in memory to new database file
+    // WARNING: Hard coded text included
 
     DEBUG_INFO("SaveDataBase", "Saving to %s", DataBaseName.Data());
 
@@ -346,13 +348,19 @@ Int_t LOpticsOpt::SaveDataBase(TString DataBaseName) {
     // 	t 0 0 0  -1.001135e+00 -3.313373e-01 -4.290819e-02  4.470852e-03  0.000000e+00  0.000000e+00  0.000000e+00  0
     // 	y 0 0 0  -8.060915e-03  1.071977e-03  9.019102e-04 -3.239615e-04  0.000000e+00  0.000000e+00  0.000000e+00  0
     //  p 0 0 0  -2.861912e-03 -2.469069e-03  8.427172e-03  2.274635e-03  0.000000e+00  0.000000e+00  0.000000e+00  0
-    //
-    //  fprintf(file,"[ L.global ]");fprintf(file,"\n");
-    //  fprintf(file,"0.3327 1 0.0 270.2 0.0 -1.6e-03        VDC Angle, Plane Spacing, Gamma Coefficents");fprintf(file,"\n");
-    //  fprintf(file,"matrix elements");fprintf(file,"\n");
-    //  fprintf(file,"t 0 0 0  -1.001135e+00 -3.313373e-01 -4.290819e-02  4.470852e-03  0.000000e+00  0.000000e+00  0.000000e+00  0");fprintf(file,"\n");
-    //  fprintf(file,"y 0 0 0  -8.060915e-03  1.071977e-03  9.019102e-04 -3.239615e-04  0.000000e+00  0.000000e+00  0.000000e+00  0");fprintf(file,"\n");
-    //  fprintf(file,"p 0 0 0  -2.861912e-03 -2.469069e-03  8.427172e-03  2.274635e-03  0.000000e+00  0.000000e+00  0.000000e+00  0");fprintf(file,"\n");
+
+    //    fprintf(file, "[ L.global ]");
+    //    fprintf(file, "\n");
+    //    fprintf(file, "0.3327 1 0.0 270.2 0.0 -1.6e-03        VDC Angle, Plane Spacing, Gamma Coefficents");
+    //    fprintf(file, "\n");
+    //    fprintf(file, "matrix elements");
+    //    fprintf(file, "\n");
+    //    fprintf(file, "t 0 0 0  -1.001135e+00 -3.313373e-01 -4.290819e-02  4.470852e-03  0.000000e+00  0.000000e+00  0.000000e+00  0");
+    //    fprintf(file, "\n");
+    //    fprintf(file, "y 0 0 0  -8.060915e-03  1.071977e-03  9.019102e-04 -3.239615e-04  0.000000e+00  0.000000e+00  0.000000e+00  0");
+    //    fprintf(file, "\n");
+    //    fprintf(file, "p 0 0 0  -2.861912e-03 -2.469069e-03  8.427172e-03  2.274635e-03  0.000000e+00  0.000000e+00  0.000000e+00  0");
+    //    fprintf(file, "\n");
 
     fprintf(file, DatabaseHeader);
 
@@ -429,25 +437,44 @@ Int_t LOpticsOpt::SaveDataBase(TString DataBaseName) {
     }
 
     // L and XF Matrix
-    //	fprintf(file,"L 0 0 0 0  25.713");fprintf(file,"\n");
-    //	fprintf(file,"L 1 0 0 0  0.1650 ");fprintf(file,"\n");
-    //	fprintf(file,"L 2 0 0 0 -0.05");fprintf(file,"\n");
-    //	fprintf(file,"L 0 1 0 0 -11.6554");fprintf(file,"\n");
-    //	fprintf(file,"L 0 2 0 0 -9.4951");fprintf(file,"\n");
-    //	fprintf(file,"L 0 0 1 0  0.0");fprintf(file,"\n");
-    //	fprintf(file,"L 0 0 2 0  0.0");fprintf(file,"\n");
-    //	fprintf(file,"L 0 0 0 1  0.0");fprintf(file,"\n");
-    //	fprintf(file,"L 0 0 0 2  0.0");fprintf(file,"\n");
-    //	fprintf(file,"XF 1 0 0 0 0 -2.181E+00");fprintf(file,"\n");
-    //	fprintf(file,"XF 0 1 0 0 0 -1.980E-01");fprintf(file,"\n");
-    //	fprintf(file,"XF 0 0 0 0 1  1.191E+01");fprintf(file,"\n");
-    //	fprintf(file,"TF 1 0 0 0 0 -1.000E-01");fprintf(file,"\n");
-    //	fprintf(file,"TF 0 1 0 0 0 -4.690E-01");fprintf(file,"\n");
-    //	fprintf(file,"TF 0 0 0 0 1  1.967E+00");fprintf(file,"\n");
-    //	fprintf(file,"PF 0 0 1 0 0  3.630E-01");fprintf(file,"\n");
-    //	fprintf(file,"PF 0 0 0 1 0 -0.902E+00");fprintf(file,"\n");
-    //	fprintf(file,"YF 0 0 1 0 0 -5.950E-01");fprintf(file,"\n");
-    //	fprintf(file,"YF 0 0 0 1 0 -1.274E+00");fprintf(file,"\n");
+    //    fprintf(file, "L 0 0 0 0  25.713");
+    //    fprintf(file, "\n");
+    //    fprintf(file, "L 1 0 0 0  0.1650 ");
+    //    fprintf(file, "\n");
+    //    fprintf(file, "L 2 0 0 0 -0.05");
+    //    fprintf(file, "\n");
+    //    fprintf(file, "L 0 1 0 0 -11.6554");
+    //    fprintf(file, "\n");
+    //    fprintf(file, "L 0 2 0 0 -9.4951");
+    //    fprintf(file, "\n");
+    //    fprintf(file, "L 0 0 1 0  0.0");
+    //    fprintf(file, "\n");
+    //    fprintf(file, "L 0 0 2 0  0.0");
+    //    fprintf(file, "\n");
+    //    fprintf(file, "L 0 0 0 1  0.0");
+    //    fprintf(file, "\n");
+    //    fprintf(file, "L 0 0 0 2  0.0");
+    //    fprintf(file, "\n");
+    //    fprintf(file, "XF 1 0 0 0 0 -2.181E+00");
+    //    fprintf(file, "\n");
+    //    fprintf(file, "XF 0 1 0 0 0 -1.980E-01");
+    //    fprintf(file, "\n");
+    //    fprintf(file, "XF 0 0 0 0 1  1.191E+01");
+    //    fprintf(file, "\n");
+    //    fprintf(file, "TF 1 0 0 0 0 -1.000E-01");
+    //    fprintf(file, "\n");
+    //    fprintf(file, "TF 0 1 0 0 0 -4.690E-01");
+    //    fprintf(file, "\n");
+    //    fprintf(file, "TF 0 0 0 0 1  1.967E+00");
+    //    fprintf(file, "\n");
+    //    fprintf(file, "PF 0 0 1 0 0  3.630E-01");
+    //    fprintf(file, "\n");
+    //    fprintf(file, "PF 0 0 0 1 0 -0.902E+00");
+    //    fprintf(file, "\n");
+    //    fprintf(file, "YF 0 0 1 0 0 -5.950E-01");
+    //    fprintf(file, "\n");
+    //    fprintf(file, "YF 0 0 0 1 0 -1.274E+00");
+    //    fprintf(file, "\n");
 
     fprintf(file, DatabaseFooter);
 
@@ -457,24 +484,24 @@ Int_t LOpticsOpt::SaveDataBase(TString DataBaseName) {
 }
 
 void LOpticsOpt::Print(const Option_t* opt) const {
-    //Print current matrix
+    // Print current matrix
 
     THaTrackingDetector::Print(opt);
     typedef vector<THaMatrixElement>::size_type vsiz_t;
 
     // Print out the optics matrices, to verify they make sense
-    // 	printf("Matrix FP (t000, y000, p000)\n");
-    // 	for (vsiz_t i=0; i<fFPMatrixElems.size(); i++) {
-    // 		const THaMatrixElement& m = fFPMatrixElems[i];
-    // 		for (vsiz_t j=0; j<m.pw.size(); j++) {
-    // 			printf("  %2d",m.pw[j]);
-    // 		}
-    // 		for (int j=0; j<m.order; j++) {
-    // 			printf("  %g",m.poly[j]);
-    // 		}
-    // 		printf(" : Opt -> %d",m.OptOrder);
-    // 		printf("\n");
-    // 	}
+    //    printf("Matrix FP (t000, y000, p000)\n");
+    //    for (vsiz_t i = 0; i < fFPMatrixElems.size(); i++) {
+    //        const THaMatrixElement& m = fFPMatrixElems[i];
+    //        for (vsiz_t j = 0; j < m.pw.size(); j++) {
+    //            printf("  %2d", m.pw[j]);
+    //        }
+    //        for (int j = 0; j < m.order; j++) {
+    //            printf("  %g", m.poly[j]);
+    //        }
+    //        printf(" : Opt -> %d", m.OptOrder);
+    //        printf("\n");
+    //    }
 
     printf("LOpticsOpt::Print: Transport Matrix:  D-terms\n");
     for (vsiz_t i = 0; i < fDMatrixElems.size(); i++) {
@@ -518,18 +545,18 @@ void LOpticsOpt::Print(const Option_t* opt) const {
         printf("\n");
     }
 
-    // 	printf("Transport Matrix:  YTA-terms (abs(theta))\n");
-    // 	for (vsiz_t i=0; i<fYTAMatrixElems.size(); i++) {
-    // 		const THaMatrixElement& m = fYTAMatrixElems[i];
-    // 		for (vsiz_t j=0; j<m.pw.size(); j++) {
-    // 			printf("  %2d",m.pw[j]);
-    // 		}
-    // 		for (int j=0; j<m.order; j++) {
-    // 			printf("\t%g",m.poly[j]);
-    // 		}
-    // 		printf(" : Opt -> %d",m.OptOrder);
-    // 		printf("\n");
-    // 	}
+    //    printf("Transport Matrix:  YTA-terms (abs(theta))\n");
+    //    for (vsiz_t i = 0; i < fYTAMatrixElems.size(); i++) {
+    //        const THaMatrixElement& m = fYTAMatrixElems[i];
+    //        for (vsiz_t j = 0; j < m.pw.size(); j++) {
+    //            printf("  %2d", m.pw[j]);
+    //        }
+    //        for (int j = 0; j < m.order; j++) {
+    //            printf("\t%g", m.poly[j]);
+    //        }
+    //        printf(" : Opt -> %d", m.OptOrder);
+    //        printf("\n");
+    //    }
 
     printf("LOpticsOpt::Print: Transport Matrix:  P-terms\n");
     for (vsiz_t i = 0; i < fPMatrixElems.size(); i++) {
@@ -545,31 +572,31 @@ void LOpticsOpt::Print(const Option_t* opt) const {
         printf("\n");
     }
 
-    // 	printf("Transport Matrix:  PTA-terms\n");
-    // 	for (vsiz_t i=0; i<fPTAMatrixElems.size(); i++) {
-    // 		const THaMatrixElement& m = fPTAMatrixElems[i];
-    // 		for (vsiz_t j=0; j<m.pw.size(); j++) {
-    // 			printf("  %2d",m.pw[j]);
-    // 		}
-    // 		for (int j=0; j<m.order; j++) {
-    // 			printf("\t%g",m.poly[j]);
-    // 		}
-    // 		printf(" : Opt -> %d",m.OptOrder);
-    // 		printf("\n");
-    // 	}
-
-    // 	printf("Matrix L\n");
-    // 	for (vsiz_t i=0; i<fLMatrixElems.size(); i++) {
-    // 		const THaMatrixElement& m = fLMatrixElems[i];
-    // 		for (vsiz_t j=0; j<m.pw.size(); j++) {
-    // 			printf("  %2d",m.pw[j]);
-    // 		}
-    // 		for (int j=0; j<m.order; j++) {
-    // 			printf("\t%g",m.poly[j]);
-    // 		}
-    // // 		printf(" : Opt -> %d",m.OptOrder);
-    // 		printf("\n");
-    // 	}
+    //    printf("Transport Matrix:  PTA-terms\n");
+    //    for (vsiz_t i = 0; i < fPTAMatrixElems.size(); i++) {
+    //        const THaMatrixElement& m = fPTAMatrixElems[i];
+    //        for (vsiz_t j = 0; j < m.pw.size(); j++) {
+    //            printf("  %2d", m.pw[j]);
+    //        }
+    //        for (int j = 0; j < m.order; j++) {
+    //            printf("\t%g", m.poly[j]);
+    //        }
+    //        printf(" : Opt -> %d", m.OptOrder);
+    //        printf("\n");
+    //    }
+    //
+    //    printf("Matrix L\n");
+    //    for (vsiz_t i = 0; i < fLMatrixElems.size(); i++) {
+    //        const THaMatrixElement& m = fLMatrixElems[i];
+    //        for (vsiz_t j = 0; j < m.pw.size(); j++) {
+    //            printf("  %2d", m.pw[j]);
+    //        }
+    //        for (int j = 0; j < m.order; j++) {
+    //            printf("\t%g", m.poly[j]);
+    //        }
+    //        printf(" : Opt -> %d", m.OptOrder);
+    //        printf("\n");
+    //    }
 
     printf("fArbitaryVertexShift[%d] = {", NFoils);
     for (UInt_t FoilID = 0; FoilID < NFoils; FoilID++)
@@ -644,9 +671,10 @@ UInt_t LOpticsOpt::Array2Matrix(const Double_t Array[], std::vector<THaMatrixEle
 
 ///////////////////////////////////////////////////////////////////////////////
 // Data storage
+///////////////////////////////////////////////////////////////////////////////
 
-UInt_t LOpticsOpt::LoadRawData(TString DataFileName, Double_t OverwriteX, UInt_t NLoad, UInt_t MaxDataPerGroup) {
-    //load "f51" ascii data file to Rawdata[]
+UInt_t LOpticsOpt::LoadRawData(TString DataFileName, UInt_t NLoad, UInt_t MaxDataPerGroup) {
+    // Load "f51" ascii data file to Rawdata[]
 
     DEBUG_INFO("LoadRawData", "Loading %s", DataFileName.Data());
 
@@ -685,7 +713,7 @@ UInt_t LOpticsOpt::LoadRawData(TString DataFileName, Double_t OverwriteX, UInt_t
         // Split the line into whitespace-separated fields
         vector<string> line_spl = Split(line);
 
-        assert(line_spl.size() <= MaxNEventData); //array size check
+        assert(line_spl.size() <= MaxNEventData); // array size check
         for (UInt_t idx = 0; idx < line_spl.size(); idx++)
             eventdata[idx] = atof(line_spl[idx].c_str());
 
@@ -693,12 +721,9 @@ UInt_t LOpticsOpt::LoadRawData(TString DataFileName, Double_t OverwriteX, UInt_t
         if (BeamShiftX != 0)
             eventdata[kBeamX] += BeamShiftX;
 
-        if (OverwriteX >-9.0)
-            eventdata[kBeamX] = OverwriteX;
-
         // determine whether to save this data
         UInt_t cutid = (UInt_t) eventdata[kCutID];
-        assert(cutid < kMaxDataGroup); // to many cuts
+        assert(cutid < kMaxDataGroup); // too many cuts
         UInt_t & grpcnt = datagrpcnt[cutid];
         grpcnt++;
         if (grpcnt > MaxDataPerGroup) {
@@ -728,7 +753,7 @@ UInt_t LOpticsOpt::LoadRawData(TString DataFileName, Double_t OverwriteX, UInt_t
 
     fclose(file);
     fNRawData = NRead;
-    fNCalibData = NRead; //fNCalibData shall be updated later if only part of data read in is for calibration use
+    fNCalibData = NRead; // fNCalibData shall be updated later if only part of data read in is for calibration use
 
     UInt_t goodstatcut = 0, actcutcnt = 0;
     for (int i = 0; i < kMaxDataGroup; i++) {
@@ -744,7 +769,7 @@ UInt_t LOpticsOpt::LoadRawData(TString DataFileName, Double_t OverwriteX, UInt_t
 }
 
 UInt_t LOpticsOpt::SaveDataBuffer(TTree * T) {
-    //save Rawdata[] to T Tree. return N event written
+    // Save Rawdata[] to T Tree. return N event written
 
     assert(T);
 
@@ -804,6 +829,8 @@ UInt_t LOpticsOpt::SaveDataBuffer(TTree * T) {
 }
 
 UInt_t LOpticsOpt::SaveDataBuffer(TString fname, TString tree) {
+    // Save Rawdata[] to ROOT file
+
     DEBUG_INFO("SaveDataBuffer", "Saving Data buffer to File %s", fname.Data());
 
     TFile *f = new TFile(fname, "recreate");
@@ -821,7 +848,8 @@ UInt_t LOpticsOpt::SaveDataBuffer(TString fname, TString tree) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-//Optimization related Commands
+// Optimization related Commands
+///////////////////////////////////////////////////////////////////////////////
 
 const TVector3 LOpticsOpt::GetSieveHoleTCS(UInt_t Col, UInt_t Row) {
     assert(Col < NSieveCol);
@@ -831,7 +859,7 @@ const TVector3 LOpticsOpt::GetSieveHoleTCS(UInt_t Col, UInt_t Row) {
 }
 
 void LOpticsOpt::PrepareSieve(void) {
-    //calculate kRealTh, kRealPhi
+    // Calculate kRealTh, kRealPhi
 
     // DEBUG_INFO("PrepareSieve","Entry Point");
 
@@ -842,7 +870,7 @@ void LOpticsOpt::PrepareSieve(void) {
         EventData &eventdata = fRawData[idx];
 
         UInt_t res = (UInt_t) eventdata.Data[kCutID];
-        //const UInt_t KineID = res / (NSieveRow * NSieveCol * NFoils); //starting 0!
+        // const UInt_t KineID = res / (NSieveRow * NSieveCol * NFoils); //starting 0!
         res = res % (NSieveRow * NSieveCol * NFoils);
         const UInt_t FoilID = res / (NSieveRow * NSieveCol); //starting 0!
         res = res % (NSieveRow * NSieveCol);
@@ -854,6 +882,7 @@ void LOpticsOpt::PrepareSieve(void) {
         const TVector3 SieveHoleTCS = GetSieveHoleTCS(Col, Row);
         eventdata.Data[kSieveX] = SieveHoleTCS.X();
         eventdata.Data[kSieveY] = SieveHoleTCS.Y();
+        eventdata.Data[kSieveZ] = SieveHoleTCS.Z();
 
         const TVector3 BeamSpotHCS(eventdata.Data[kBeamX], eventdata.Data[kBeamY], targetfoils[FoilID]);
         eventdata.Data[kBeamZ] = targetfoils[FoilID];
@@ -867,7 +896,7 @@ void LOpticsOpt::PrepareSieve(void) {
         const Double_t x_tg = BeamSpotTCS.X() - BeamSpotTCS.Z() * eventdata.Data[kRealTh];
         eventdata.Data[kRealTgX] = x_tg;
 
-        //Expected th ph before ext. target correction
+        // Expected th ph before ext. target correction
         // fDeltaTh = fThetaCorr * x_tg;
         // Double_t theta = trkifo->GetTheta() + fDeltaTh;
         eventdata.Data[kRealThMatrix] = eventdata.Data[kRealTh] - x_tg * ExtTarCor_ThetaCorr;
@@ -885,16 +914,16 @@ void LOpticsOpt::PrepareSieve(void) {
     DEBUG_INFO("PrepareSieve", "Average : D_Th = %f,\t D_Phi = %f", dth / fNRawData, dphi / fNRawData);
     DEBUG_INFO("PrepareSieve", "Average Extended Target Corretion: th = %f,\t rms_th = %f", exttargcorr_th / fNRawData, TMath::Sqrt(rms_exttargcorr_th / fNRawData));
 
-    //make sure kCalcTh, kCalcPh is filled
+    // Make sure kCalcTh, kCalcPh is filled
     SumSquareDTh();
     SumSquareDPhi();
 }
 
 Double_t LOpticsOpt::VerifyMatrix_Sieve(void) {
-    //static summarize difference between tg_th, th_ph caculated from current database and those in root file
+    // Static summarize difference between tg_th, th_ph calculated from current database and those in root file
 
-    Double_t dth = 0, dphi = 0; //Difference
-    Double_t rmsth = 0, rmsphi = 0; //mean square
+    Double_t dth = 0, dphi = 0; // Difference
+    Double_t rmsth = 0, rmsphi = 0; // mean square
 
     Double_t theta, phi;
 
@@ -905,16 +934,17 @@ Double_t LOpticsOpt::VerifyMatrix_Sieve(void) {
         const Double_t(*powers)[5] = eventdata.powers;
 
         // calculate the matrices we need
-        //CalcMatrix(x_fp, fDMatrixElems);
+        // CalcMatrix(x_fp, fDMatrixElems);
         CalcMatrix(x_fp, fTMatrixElems);
-        //CalcMatrix(x_fp, fYMatrixElems);
-        //CalcMatrix(x_fp, fYTAMatrixElems);
+        // CalcMatrix(x_fp, fYMatrixElems);
+        // CalcMatrix(x_fp, fYTAMatrixElems);
         CalcMatrix(x_fp, fPMatrixElems);
         CalcMatrix(x_fp, fPTAMatrixElems);
 
         // calculate the coordinates at the target
         theta = CalcTargetVar(fTMatrixElems, powers);
         phi = CalcTargetVar(fPMatrixElems, powers) + CalcTargetVar(fPTAMatrixElems, powers);
+        // phi = CalcTargetVar(fPMatrixElems, powers);
 
         dth += theta - eventdata.Data[kL_tr_tg_th];
         rmsth += (theta - eventdata.Data[kL_tr_tg_th])*(theta - eventdata.Data[kL_tr_tg_th]);
@@ -923,24 +953,17 @@ Double_t LOpticsOpt::VerifyMatrix_Sieve(void) {
         rmsphi += (phi - eventdata.Data[kL_tr_tg_ph])*(phi - eventdata.Data[kL_tr_tg_ph]);
     }
 
-    DEBUG_INFO("VerifyMatrix_Sieve", "dth = %f,rmsth=%f", dth / fNRawData, TMath::Sqrt(rmsth / fNRawData));
-    DEBUG_INFO("VerifyMatrix_Sieve", "dphi = %f, rmsphi=%f", dphi / fNRawData, TMath::Sqrt(rmsphi / fNRawData));
+    DEBUG_INFO("VerifyMatrix_Sieve", "dth = %f, rmsth = %f", dth / fNRawData, TMath::Sqrt(rmsth / fNRawData));
+    DEBUG_INFO("VerifyMatrix_Sieve", "dphi = %f, rmsphi = %f", dphi / fNRawData, TMath::Sqrt(rmsphi / fNRawData));
 
     return TMath::Sqrt(rmsth / fNRawData + rmsphi / fNRawData);
 }
 
-TCanvas * LOpticsOpt::CheckSieve(UInt_t SpecialNLoad) {
-    Bool_t special = kFALSE;
-
-    if (SpecialNLoad < NFoils) {
-        DEBUG_INFO("CheckSieve", "Special Plot only Setting 0-%d ", SpecialNLoad - 1);
-        special = kTRUE;
-    }
-
-    const UInt_t nplot = SpecialNLoad < NFoils ? SpecialNLoad : NFoils;
-
-    //Visualize Sieve Plane
+TCanvas * LOpticsOpt::CheckSieve(Int_t PlotFoilID) {
+    // Visualize Sieve Plane
     DEBUG_INFO("CheckSieve", "Entry Point");
+
+    const UInt_t nplot = (PlotFoilID == -1) ? NFoils : 1;
 
     TH2D * HSievePlane[NFoils] = {0};
     Double_t x_lim[NFoils] = {0};
@@ -950,16 +973,11 @@ TCanvas * LOpticsOpt::CheckSieve(UInt_t SpecialNLoad) {
         x_lim[idx] = 1.3 * TMath::Max(TMath::Abs(SieveYbyCol[0]), TMath::Abs(SieveYbyCol[NSieveCol - 1]));
         y_lim[idx] = 1.5 * TMath::Max(TMath::Abs(SieveXbyRow[0]), TMath::Abs(SieveXbyRow[NSieveRow - 1]));
 
-        if (!special) {
-            HSievePlane[idx] = new TH2D(Form("Sieve_Foil%d", idx), Form("Sieve Plane Proj. (tg_X vs tg_Y) for Data set #%d", idx), 500, -x_lim[idx], x_lim[idx], 500, -y_lim[idx], y_lim[idx]);
-        }
-        else {
-            HSievePlane[idx] = new TH2D(Form("Sieve_Foil%d", idx), Form("Sieve Plane Proj. (tg_X vs tg_Y) for Data set #%d", idx), 200, -x_lim[idx], x_lim[idx], 200, -y_lim[idx], y_lim[idx]);
-        }
+        HSievePlane[idx] = new TH2D(Form("Sieve_Foil%d", idx), Form("Sieve Plane Proj. (tg_X vs tg_Y) for Data set #%d", idx), 500, -x_lim[idx], x_lim[idx], 500, -y_lim[idx], y_lim[idx]);
 
         HSievePlane[idx]->SetXTitle("Sieve H [m]");
         HSievePlane[idx]->SetYTitle("Sieve V [m]");
-        assert(HSievePlane[idx]); //assure memory allocation
+        assert(HSievePlane[idx]); // assure memory allocation
     }
 
     Double_t dX = 0, dY = 0;
@@ -980,7 +998,7 @@ TCanvas * LOpticsOpt::CheckSieve(UInt_t SpecialNLoad) {
         const EventData &eventdata = fRawData[idx];
 
         UInt_t res = (UInt_t) eventdata.Data[kCutID];
-        //const UInt_t KineID = res / (NSieveRow * NSieveCol * NFoils); //starting 0!
+        // const UInt_t KineID = res / (NSieveRow * NSieveCol * NFoils); //starting 0!
         res = res % (NSieveRow * NSieveCol * NFoils);
         const UInt_t FoilID = res / (NSieveRow * NSieveCol); //starting 0!
         res = res % (NSieveRow * NSieveCol);
@@ -1000,7 +1018,7 @@ TCanvas * LOpticsOpt::CheckSieve(UInt_t SpecialNLoad) {
         // fTCSInHCS.RotateAxes(TCSX,TCSY,TCSZ);
         TVector3 BeamSpotTCS = fTCSInHCS.Inverse()*(BeamSpotHCS - fPointingOffset);
 
-        TVector3 MomDirectionTCS = SieveHoleTCS - BeamSpotTCS;
+        // TVector3 MomDirectionTCS = SieveHoleTCS - BeamSpotTCS;
 
         Double_t ProjectionX = BeamSpotTCS.X() + (eventdata.Data[kCalcTh] + eventdata.Data[kRealTgX] * ExtTarCor_ThetaCorr) * (SieveHoleTCS.Z() - BeamSpotTCS.Z());
         Double_t ProjectionY = BeamSpotTCS.Y() + eventdata.Data[kCalcPh] * (SieveHoleTCS.Z() - BeamSpotTCS.Z());
@@ -1040,19 +1058,15 @@ TCanvas * LOpticsOpt::CheckSieve(UInt_t SpecialNLoad) {
 
     for (UInt_t idx = 0; idx < nplot; idx++) {
         UInt_t FoilID = idx;
+        if (PlotFoilID >= 0)
+            FoilID = PlotFoilID;
 
         c1->cd(idx + 1);
         assert(HSievePlane[idx]); //pointer check
 
-        if (!special) {
-            HSievePlane[idx]->Draw("COLZ");
-        }
-        else {
-            HSievePlane[idx]->Draw("COLZ");
-            HSievePlane[idx]->Draw("contzsame");
-        }
+        HSievePlane[idx]->Draw("COLZ");
 
-        //Draw Sieve
+        // Draw Sieve
         const Double_t plotwidth = 0.004;
         for (UInt_t Row = 0; Row < NSieveRow; Row++) {
             for (UInt_t Col = 0; Col < NSieveCol; Col++) {
@@ -1069,21 +1083,19 @@ TCanvas * LOpticsOpt::CheckSieve(UInt_t SpecialNLoad) {
             }
         }
 
-        if (!special) {
-            //draw arrows
-            for (UInt_t Col = 0; Col < NSieveCol; Col++) {
-                for (UInt_t Row = 0; Row < NSieveRow; Row++) {
-                    if (SieveEventID[FoilID][Col][Row][kEventID] > 0) {
-                        assert(SieveEventID[FoilID][Col][Row][kEventID] < fNRawData); //array index bondary check
-                        TArrow * ar2 = new TArrow(SieveEventID[FoilID][Col][Row][kCalcSieveY], SieveEventID[FoilID][Col][Row][kCalcSieveX], SieveEventID[FoilID][Col][Row][kRealSieveY], SieveEventID[FoilID][Col][Row][kRealSieveX], 0.008, "|>");
-                        ar2->SetAngle(40);
-                        ar2->SetLineColor(kMagenta);
-                        ar2->SetFillColor(kMagenta);
+        // Draw arrows
+        for (UInt_t Col = 0; Col < NSieveCol; Col++) {
+            for (UInt_t Row = 0; Row < NSieveRow; Row++) {
+                if (SieveEventID[FoilID][Col][Row][kEventID] > 0) {
+                    assert(SieveEventID[FoilID][Col][Row][kEventID] < fNRawData); //array index bondary check
+                    TArrow * ar2 = new TArrow(SieveEventID[FoilID][Col][Row][kCalcSieveY], SieveEventID[FoilID][Col][Row][kCalcSieveX], SieveEventID[FoilID][Col][Row][kRealSieveY], SieveEventID[FoilID][Col][Row][kRealSieveX], 0.008, "|>");
+                    ar2->SetAngle(40);
+                    ar2->SetLineColor(kMagenta);
+                    ar2->SetFillColor(kMagenta);
 
-                        const Double_t ignorelimit = 0.005;
-                        if ((ar2->GetX1() - ar2->GetX2())*(ar2->GetX1() - ar2->GetX2())+(ar2->GetY1() - ar2->GetY2())*(ar2->GetY1() - ar2->GetY2()) > ignorelimit * ignorelimit)
-                            ar2->Draw();
-                    }
+                    const Double_t ignorelimit = 0.005;
+                    if ((ar2->GetX1() - ar2->GetX2())*(ar2->GetX1() - ar2->GetX2())+(ar2->GetY1() - ar2->GetY2())*(ar2->GetY1() - ar2->GetY2()) > ignorelimit * ignorelimit)
+                        ar2->Draw();
                 }
             }
         }
@@ -1093,7 +1105,7 @@ TCanvas * LOpticsOpt::CheckSieve(UInt_t SpecialNLoad) {
 }
 
 Double_t LOpticsOpt::SumSquareDTh(Bool_t PrintEachHole) {
-    //return square sum of diff between calculated tg_th and expected tg_th
+    // return square sum of diff between calculated tg_th and expected tg_th
 
     Double_t dth = 0; //Difference
     Double_t rmsth = 0; //mean square
@@ -1147,11 +1159,11 @@ Double_t LOpticsOpt::SumSquareDTh(Bool_t PrintEachHole) {
         DEBUG_MASSINFO("SumSquareDTh", "D_Th = %f = \t%f - \t%f", theta - eventdata.Data[kRealThMatrix], theta, eventdata.Data[kRealThMatrix]);
         DEBUG_MASSINFO("SumSquareDTh", "%d : %f, %f, %f, %f, %f", kRealTh, eventdata.Data[kRealTh - 2], eventdata.Data[kRealTh - 1], eventdata.Data[kRealTh], eventdata.Data[kRealTh + 1], eventdata.Data[kRealTh + 2]);
 
-        //save the results
+        // save the results
         eventdata.Data[kCalcTh] = theta;
     }
 
-    DEBUG_INFO("SumSquareDTh", "#%d : dth = %f,rmsth=%f", NCall, dth / fNRawData, TMath::Sqrt(rmsth / fNRawData));
+    DEBUG_INFO("SumSquareDTh", "#%d : dth = %f, rmsth = %f", NCall, dth / fNRawData, TMath::Sqrt(rmsth / fNRawData));
 
     if (PrintEachHole) {
         DEBUG_INFO("SumSquareDTh", "Print Deviation and RMS of each hole:");
@@ -1190,7 +1202,7 @@ Double_t LOpticsOpt::SumSquareDTh(Bool_t PrintEachHole) {
 
         cout << "All(Same wt each hole):\t" << (int) sum_cnt << "\t" << sum_dev / sum_cnt << "\t" << sum_rms / sum_cnt << "\n";
 
-        //DEBUG_INFO("SumSquareDTh", "Average |deviation| = %f +/- %f (stat. w.)", weighted_dev / weight, TMath::Sqrt(1 / weight));
+        // DEBUG_INFO("SumSquareDTh", "Average |deviation| = %f +/- %f (stat. w.)", weighted_dev / weight, TMath::Sqrt(1 / weight));
         DEBUG_INFO("SumSquareDTh", "Average |deviation| = %f ", sum_absdev / sum_cnt);
         DEBUG_INFO("SumSquareDTh", "Average |deviation| =\n %f +/- %f \n %f +/- %f \n %f +/- %f \n %f +/- %f \n %f +/- %f \n %f +/- %f \n %f +/- %f ",
                 sum_devabs[0] / sum_nhole[0], TMath::Sqrt(sum_devabserr[0]) / sum_nhole[0],
@@ -1211,7 +1223,7 @@ Double_t LOpticsOpt::SumSquareDTh(Bool_t PrintEachHole) {
 }
 
 Double_t LOpticsOpt::SumSquareDPhi(Bool_t PrintEachHole) {
-    //return square sum of diff between calculated tg_ph and expected tg_ph
+    // return square sum of diff between calculated tg_ph and expected tg_ph
 
     Double_t dphi = 0; //Difference
     Double_t rmsphi = 0; //mean square
@@ -1266,7 +1278,7 @@ Double_t LOpticsOpt::SumSquareDPhi(Bool_t PrintEachHole) {
         eventdata.Data[kCalcPh] = phi;
     }
 
-    DEBUG_INFO("SumSquareDPhi", "#%d : dphi = %f, rmsphi=%f", NCall, dphi / fNRawData, TMath::Sqrt(rmsphi / fNRawData));
+    DEBUG_INFO("SumSquareDPhi", "#%d : dphi = %f, rmsphi = %f", NCall, dphi / fNRawData, TMath::Sqrt(rmsphi / fNRawData));
 
     if (PrintEachHole) {
         DEBUG_INFO("SumSquareDTh", "Print Deviation and RMS of each hole:");
@@ -1325,19 +1337,84 @@ Double_t LOpticsOpt::SumSquareDPhi(Bool_t PrintEachHole) {
     return rmsphi;
 }
 
-Double_t LOpticsOpt::SumSquareDThUBeam(void) {
+Double_t LOpticsOpt::SumSquareDBeamX(void) {
     //return standard deviation of projected beam_x
 
-    Double_t sumylab = 0;
-    Double_t sumylab2 = 0;
+    Double_t sumxlab[NFoils] = {0};
+    Double_t sumxlab2[NFoils] = {0};
+    Double_t nxlab[NFoils] = {0};
 
     static UInt_t NCall = 0;
     NCall++;
 
-    Double_t theta, phi, xtr, ytr, ztr, ylab;
+    Double_t phi, xlab;
 
     for (UInt_t idx = 0; idx < fNRawData; idx++) {
         EventData &eventdata = fRawData[idx];
+
+        UInt_t res = (UInt_t) eventdata.Data[kCutID];
+        res = res % (NSieveRow * NSieveCol * NFoils);
+        const UInt_t FoilID = res / (NSieveRow * NSieveCol); //starting 0!
+
+        Double_t x_fp = eventdata.Data[kX];
+        const Double_t(*powers)[5] = eventdata.powers;
+
+        // calculate the matrices we need
+        // CalcMatrix(x_fp, fDMatrixElems);
+        // CalcMatrix(x_fp, fTMatrixElems);
+        // CalcMatrix(x_fp, fYMatrixElems);
+        // CalcMatrix(x_fp, fYTAMatrixElems);
+        CalcMatrix(x_fp, fPMatrixElems);
+        CalcMatrix(x_fp, fPTAMatrixElems);
+
+        // calculate the coordinates at the target
+        phi = CalcTargetVar(fPMatrixElems, powers) + CalcTargetVar(fPTAMatrixElems, powers);
+
+        TVector3 SieveHoleTCS(eventdata.Data[kSieveX], eventdata.Data[kSieveY], eventdata.Data[kSieveZ]);
+        TVector3 SieveHoleHCS = fTCSInHCS*SieveHoleTCS;
+        Double_t slope = TMath::Tan(TMath::ATan(phi) + HRSAngle);
+        xlab = SieveHoleHCS.X() + slope * (eventdata.Data[kBeamZ] - SieveHoleHCS.Z());
+        eventdata.Data[kBeamX] = xlab;
+
+        sumxlab[FoilID] += xlab;
+        if (TMath::Abs(xlab) > 20e-3) sumxlab2[FoilID] += 1000; // Cheating here. The fit may go out the target range. Use this to limit the fitting range.
+        sumxlab2[FoilID] += xlab*xlab;
+        nxlab[FoilID] += 1;
+    }
+
+    Double_t rmsxlab = 0;
+
+    for (UInt_t i = 0; i < NFoils; i++)
+        if (nxlab[i] > 0) {
+            Double_t sum = sumxlab[i];
+            Double_t sum2 = sumxlab2[i];
+            Double_t n = nxlab[i];
+            Double_t rms = TMath::Sqrt(sum2 / n - (sum / n)*(sum / n));
+            rmsxlab += rms;
+            DEBUG_INFO("SumSquareDBeamX", "#%d : xlab(%d) = %f, rmsxlab(%d) = %f", NCall, i, sum / n, i, rms);
+        }
+
+    return rmsxlab;
+}
+
+Double_t LOpticsOpt::SumSquareDBeamY(void) {
+    // return standard deviation of projected beam_y
+
+    Double_t sumylab[NFoils] = {0};
+    Double_t sumylab2[NFoils] = {0};
+    Double_t nylab[NFoils] = {0};
+
+    static UInt_t NCall = 0;
+    NCall++;
+
+    Double_t theta, phi, ztr, ylab;
+
+    for (UInt_t idx = 0; idx < fNRawData; idx++) {
+        EventData &eventdata = fRawData[idx];
+
+        UInt_t res = (UInt_t) eventdata.Data[kCutID];
+        res = res % (NSieveRow * NSieveCol * NFoils);
+        const UInt_t FoilID = res / (NSieveRow * NSieveCol); //starting 0!
 
         Double_t x_fp = eventdata.Data[kX];
         const Double_t(*powers)[5] = eventdata.powers;
@@ -1353,123 +1430,93 @@ Double_t LOpticsOpt::SumSquareDThUBeam(void) {
         // calculate the coordinates at the target
         theta = CalcTargetVar(fTMatrixElems, powers);
         phi = CalcTargetVar(fPMatrixElems, powers) + CalcTargetVar(fPTAMatrixElems, powers);
-        //cout << CalcTargetVar(fPTAMatrixElems, powers) << endl;
 
-        ztr = eventdata.Data[kBeamZ] / TMath::Cos(HRSAngle) - ZPos;
-        xtr = eventdata.Data[kSieveX] + theta * ztr;
-        ytr = eventdata.Data[kSieveY] + phi * ztr;
-        //xlab = ytr / TMath::Cos(HRSAngle) + ytr * TMath::Tan(HRSAngle) * phi + eventdata.Data[kBeamZ] * TMath::Tan(HRSAngle);
-        ylab = -(xtr + ytr * TMath::Tan(HRSAngle) * theta);
-        //cout << ytr * TMath::Tan(HRSAngle) * theta << endl;
+        TVector3 SieveHoleTCS(eventdata.Data[kSieveX], eventdata.Data[kSieveY], eventdata.Data[kSieveZ]);
+        TVector3 SieveHoleHCS = fTCSInHCS*SieveHoleTCS;
+        ztr = (eventdata.Data[kBeamZ] - SieveHoleHCS.Z()) / TMath::Cos(TMath::ATan(phi) + HRSAngle);
+        ylab = -(eventdata.Data[kSieveX] + theta * ztr);
+        eventdata.Data[kBeamY] = ylab;
 
-        sumylab += ylab;
-        sumylab2 += ylab*ylab;
+        sumylab[FoilID] += ylab;
+        if (TMath::Abs(ylab) > 20e-3) sumylab2[FoilID] += 1000; // Cheating here. The fit may go out the target range. Use this to limit the fitting range.
+        sumylab2[FoilID] += ylab*ylab;
+        nylab[FoilID] += 1;
     }
 
-    Double_t rmsylab = TMath::Sqrt(sumylab2 / fNRawData - (sumylab / fNRawData)*(sumylab / fNRawData));
+    Double_t rmsylab = 0;
 
-    DEBUG_INFO("SumSquareDThUBeam", "#%d : dylab = %f, rmsphi=%f", NCall, sumylab / fNRawData, rmsylab);
+    for (UInt_t i = 0; i < NFoils; i++)
+        if (nylab[i] > 0) {
+            Double_t sum = sumylab[i];
+            Double_t sum2 = sumylab2[i];
+            Double_t n = nylab[i];
+            Double_t rms = TMath::Sqrt(sum2 / n - (sum / n)*(sum / n));
+            rmsylab += rms;
+            DEBUG_INFO("SumSquareDBeamY", "#%d : ylab(%d) = %f, rmsylab(%d) = %f", NCall, i, sum / n, i, rms);
+        }
 
     return rmsylab;
 }
 
-Double_t LOpticsOpt::SumSquareDPhiUBeam(void) {
-    //return standard deviation of projected beam_x
+void LOpticsOpt::PrepareTgY(void) {
+    // calculate kRealTgY
 
-    Double_t sumxlab = 0;
-    Double_t sumxlab2 = 0;
-
-    static UInt_t NCall = 0;
-    NCall++;
-
-    Double_t phi, ytr, xlab;
-
-    for (UInt_t idx = 0; idx < fNRawData; idx++) {
-        EventData &eventdata = fRawData[idx];
-
-        Double_t x_fp = eventdata.Data[kX];
-        const Double_t(*powers)[5] = eventdata.powers;
-
-        // calculate the matrices we need
-        // CalcMatrix(x_fp, fDMatrixElems);
-        // CalcMatrix(x_fp, fTMatrixElems);
-        // CalcMatrix(x_fp, fYMatrixElems);
-        // CalcMatrix(x_fp, fYTAMatrixElems);
-        CalcMatrix(x_fp, fPMatrixElems);
-        CalcMatrix(x_fp, fPTAMatrixElems);
-
-        // calculate the coordinates at the target
-        phi = CalcTargetVar(fPMatrixElems, powers) + CalcTargetVar(fPTAMatrixElems, powers);
-        //cout << CalcTargetVar(fPTAMatrixElems, powers) << endl;
-
-        ytr = eventdata.Data[kSieveY] + phi * (eventdata.Data[kBeamZ] / TMath::Cos(HRSAngle) - ZPos);
-        //xlab = ytr / TMath::Cos(HRSAngle) + ytr * TMath::Tan(HRSAngle) * phi + eventdata.Data[kBeamZ] * TMath::Tan(HRSAngle);
-        xlab = ytr / TMath::Cos(HRSAngle) + eventdata.Data[kBeamZ] * TMath::Tan(HRSAngle);
-        eventdata.Data[kBeamX] = xlab;
-
-        sumxlab += xlab;
-        sumxlab2 += xlab*xlab;
-    }
-
-    Double_t rmsxlab = TMath::Sqrt(sumxlab2 / fNRawData - (sumxlab / fNRawData)*(sumxlab / fNRawData));
-
-    DEBUG_INFO("SumSquareDPhiUBeam", "#%d : dxlab = %f, rmsphi=%f", NCall, sumxlab / fNRawData, rmsxlab);
-
-    return rmsxlab;
-}
-
-void LOpticsOpt::PrepareVertex(void) {
-    //calculate kRealTgY, kRealReactZ
-
-    //set fYMatrixElems as current matrix to optimize
-    fCurrentMatrixElems = &fYMatrixElems;
-
-    Double_t dtg_y = 0, dtg_y_rms = 0;
+    Double_t dtg_y = 0;
 
     for (UInt_t idx = 0; idx < fNRawData; idx++) {
         EventData &eventdata = fRawData[idx];
 
         UInt_t res = (UInt_t) eventdata.Data[kCutID];
-        const UInt_t FoilID = res;
+        // const UInt_t KineID = res / (NSieveRow * NSieveCol * NFoils); //starting 0!
+        res = res % (NSieveRow * NSieveCol * NFoils);
+        const UInt_t FoilID = res / (NSieveRow * NSieveCol); //starting 0!
+        res = res % (NSieveRow * NSieveCol);
+        const UInt_t Col = res / (NSieveRow); //starting 0!
+        const UInt_t Row = res % (NSieveRow); //starting 0!
 
         assert(FoilID < NFoils); //check array index size
 
         TVector3 BeamSpotHCS(eventdata.Data[kBeamX], eventdata.Data[kBeamY], targetfoils[FoilID]);
         TVector3 BeamSpotTCS = fTCSInHCS.Inverse()*(BeamSpotHCS - fPointingOffset);
 
-        Double_t Real_Tg_Y = BeamSpotTCS.Y() + eventdata.Data[kL_tr_tg_ph] * (0 - BeamSpotTCS.Z());
+        const TVector3 SieveHoleTCS = GetSieveHoleTCS(Col, Row);
+        const TVector3 MomDirectionTCS = SieveHoleTCS - BeamSpotTCS;
+
+        Double_t Real_Tg_Phi = MomDirectionTCS.Y() / MomDirectionTCS.Z();
+
+        Double_t Real_Tg_Y = BeamSpotTCS.Y() + Real_Tg_Phi * (0 - BeamSpotTCS.Z());
 
         eventdata.Data[kRealTgY] = Real_Tg_Y;
         eventdata.Data[kRealReactZ] = targetfoils[FoilID];
 
-        dtg_y += (eventdata.Data[kL_tr_tg_y] - Real_Tg_Y);
-        dtg_y_rms += (eventdata.Data[kL_tr_tg_y] - Real_Tg_Y)*(eventdata.Data[kL_tr_tg_y] - Real_Tg_Y);
+        dtg_y += (eventdata.Data[kRealTgY] - eventdata.Data[kL_tr_tg_y]);
 
-        //redundant checks
-        TVector3 Tg_YSpotTCS(0, eventdata.Data[kRealTgY], 0);
-        TVector3 MomDirectionTCS(0, eventdata.Data[kL_tr_tg_ph], 1);
+        // redundant checks
+        // TVector3 Tg_YSpotTCS(0, Real_Tg_Y, 0);
+        // TVector3 PhiDirectionTCS(0, eventdata.Data[kL_tr_tg_ph], 1);
 
-        TVector3 Tg_YSpotHCS = fTCSInHCS * Tg_YSpotTCS + fPointingOffset;
-        TVector3 MomDirectionHCS = fTCSInHCS * MomDirectionTCS;
+        // TVector3 Tg_YSpotHCS = fTCSInHCS * Tg_YSpotTCS + fPointingOffset;
+        // TVector3 PhiDirectionHCS = fTCSInHCS * PhiDirectionTCS;
 
-        assert(Tg_YSpotHCS.Y() == MissPointY); // check coordinates conversions
-        assert(MomDirectionHCS.Y() == 0); // check coordinates conversions
+        // assert(Tg_YSpotHCS.Y() == MissPointY); // check coordinates conversions
+        // assert(PhiDirectionHCS.Y() == 0); // check coordinates conversions
 
-        Double_t reactz = Tg_YSpotHCS.Z()-(Tg_YSpotHCS.X() - eventdata.Data[kBeamX]) / MomDirectionHCS.X() * MomDirectionHCS.Z();
+        // Double_t reactz = Tg_YSpotHCS.Z()-(Tg_YSpotHCS.X() - eventdata.Data[kBeamX]) / PhiDirectionHCS.X() * PhiDirectionHCS.Z();
 
-        DEBUG_MASSINFO("PrepareVertex", "reactz =%f, eventdata.Data[kRealReactZ]=%f", reactz, eventdata.Data[kRealReactZ]);
-        DEBUG_MASSINFO("PrepareVertex", "Real_Tg_Y =%f, eventdata.Data[kRealReactZ]=%f, targetfoils[FoilID]=%f", Real_Tg_Y, eventdata.Data[kL_tr_tg_ph], targetfoils[FoilID]);
-        assert(TMath::Abs(reactz - eventdata.Data[kRealReactZ]) < 1e-4); //check internal calculation consistency
+        // DEBUG_MASSINFO("PrepareVertex", "reactz =%f, eventdata.Data[kRealReactZ]=%f", reactz, eventdata.Data[kRealReactZ]);
+        // DEBUG_MASSINFO("PrepareVertex", "Real_Tg_Y =%f, eventdata.Data[kRealReactZ]=%f, targetfoils[FoilID]=%f", Real_Tg_Y, eventdata.Data[kL_tr_tg_ph], targetfoils[FoilID]);
+        DEBUG_MASSINFO("PrepareTgY", "dtg_y = %f", eventdata.Data[kRealTgY] - eventdata.Data[kL_tr_tg_y]);
+        // assert(TMath::Abs(reactz - eventdata.Data[kRealReactZ]) < 1e-4); //check internal calculation consistency
     }
 
-    DEBUG_INFO("PrepareVertex", "Average : dtg_y = %f, dtg_y_rms=%f", dtg_y / fNRawData, dtg_y_rms / fNRawData);
+    DEBUG_INFO("PrepareVertex", "Average : dtg_y = %f", dtg_y / fNRawData);
 
-    //make sure kCalcTh, kCalcPh is filled
+    // make sure kCalcTh, kCalcPh is filled
     SumSquareDTgY();
 }
 
-Double_t LOpticsOpt::VerifyMatrix_Vertex(void) {
-    //static summarize difference between tg_y caculated from current database and those in root file
+Double_t LOpticsOpt::VerifyMatrix_TgY(void) {
+    // static summarize difference between tg_y calculated from current database and those in root file
 
     Double_t dtg_y = 0; //Difference
     Double_t dtg_y_rms = 0; //mean square
@@ -1496,112 +1543,104 @@ Double_t LOpticsOpt::VerifyMatrix_Vertex(void) {
         dtg_y += y - eventdata.Data[kL_tr_tg_y];
         dtg_y_rms += (y - eventdata.Data[kL_tr_tg_y])*(y - eventdata.Data[kL_tr_tg_y]);
 
-        DEBUG_MASSINFO("VerifyMatrix_Vertex", "y = %f; eventdata.Data[kL_tr_tg_y] = %f", y, eventdata.Data[kL_tr_tg_y]);
+        DEBUG_MASSINFO("VerifyMatrix_TgY", "y = %f, eventdata.Data[kL_tr_tg_y] = %f", y, eventdata.Data[kL_tr_tg_y]);
     }
 
-    DEBUG_INFO("VerifyMatrix_Vertex", "dtg_y = %f,dtg_y_rms=%f", dtg_y / fNRawData, TMath::Sqrt(dtg_y_rms / fNRawData));
+    DEBUG_INFO("VerifyMatrix_Vertex", "dtg_y = %f, dtg_y_rms = %f", dtg_y / fNRawData, TMath::Sqrt(dtg_y_rms / fNRawData));
 
     return TMath::Sqrt(dtg_y_rms / fNRawData);
 }
 
-TCanvas * LOpticsOpt::CheckVertex() {
-    //Visualize ReactZ spectrum
+TCanvas * LOpticsOpt::CheckTgY() {
+    // Visualize TgY spectrum
 
-    DEBUG_INFO("CheckVertex", "Entry Point");
+    DEBUG_INFO("CheckTgY", "Entry Point");
 
-    const Double_t VertexRange = .25;
-    TH2D * hYVSReactZ = new TH2D("hYVSReactZ", "Rot. Y VS ReactZ", 1000, -VertexRange, VertexRange, 1000, -.1, .1);
-    TH2D * hPhVSReactZ = new TH2D("hPhVSReactZ", "Rot. Ph VS ReactZ", 1000, -VertexRange, VertexRange, 1000, -.05, .05);
-    TH2D * hrbxVSReactZ = new TH2D("hrbxVSReactZ", "Beam X VS ReactZ", 1000, -VertexRange, VertexRange, 1000, -.005, .005);
-    TH1D * hReactZ = new TH1D("hReactZ", "LHRS ReactZ", 400, -VertexRange, VertexRange);
+    const UInt_t nplot = NFoils;
+    TH1D * HTgY[NFoils] = {0};
+    TH1D * HTgYReal[NFoils] = {0};
+    const Double_t YRange = 10e-3;
 
-    Double_t dtg_vz = 0, dtg_vz_rms = 0, reactz = 0;
-    Double_t dtg_vz_foil[NFoils] = {0};
-    Double_t dtg_y_foil[NFoils] = {0};
-    Double_t rmstg_vz_foil[NFoils] = {0};
-    Double_t rmstg_y_foil[NFoils] = {0};
-    UInt_t ndata_foil[NFoils] = {0};
+    for (UInt_t idx = 0; idx < NFoils; idx++) {
+        HTgY[idx] = new TH1D(Form("Target_Y%d", idx), Form("Target Y for Data set #%d", idx), 400, -YRange, YRange);
+        HTgYReal[idx] = new TH1D(Form("Target_Y%d", idx), Form("Target Y for Data set #%d", idx), 400, -YRange, YRange);
 
-    //calculate kCalcReactZ
+        HTgY[idx]->SetXTitle("Target Y [m]");
+        assert(HTgY[idx]); // assure memory allocation
+    }
+
+    Double_t dtg_y = 0;
+    Double_t dtg_y_rms = 0;
+
     for (UInt_t idx = 0; idx < fNRawData; idx++) {
         EventData &eventdata = fRawData[idx];
 
-        //TVector3 BeamSpotHCS(eventdata.Data[kBeamX], eventdata.Data[kBeamY], eventdata.Data[kRealReactZ]);
+        UInt_t res = (UInt_t) eventdata.Data[kCutID];
+        // const UInt_t KineID = res / (NSieveRow * NSieveCol * NFoils); //starting 0!
+        res = res % (NSieveRow * NSieveCol * NFoils);
+        const UInt_t FoilID = res / (NSieveRow * NSieveCol); //starting 0!
 
-        TVector3 Tg_YSpotTCS(0, eventdata.Data[kCalcTgY], 0);
-        TVector3 MomDirectionTCS(0, eventdata.Data[kL_tr_tg_ph], 1);
+        HTgY[FoilID]->Fill(eventdata.Data[kCalcTgY]);
+        HTgYReal[FoilID]->Fill(eventdata.Data[kRealTgY]);
 
-        TVector3 Tg_YSpotHCS = fTCSInHCS * Tg_YSpotTCS + fPointingOffset;
-        TVector3 MomDirectionHCS = fTCSInHCS*MomDirectionTCS;
-
-        assert(Tg_YSpotHCS.Y() == MissPointY); //internal consistency check
-        assert(MomDirectionHCS.Y() == 0); //internal consistency check
-
-        reactz = Tg_YSpotHCS.Z()- (Tg_YSpotHCS.X() - eventdata.Data[kBeamX]) / MomDirectionHCS.X() * MomDirectionHCS.Z();
-
-        eventdata.Data[kCalcReactZ] = reactz;
-
-        dtg_vz += reactz - eventdata.Data[kRealReactZ];
-        dtg_vz_rms += (reactz - eventdata.Data[kRealReactZ])*(reactz - eventdata.Data[kRealReactZ]);
-
-        hYVSReactZ->Fill(reactz, eventdata.Data[kY]);
-        hPhVSReactZ->Fill(reactz, eventdata.Data[kPhi]);
-        hrbxVSReactZ->Fill(reactz, eventdata.Data[kBeamX]);
-        hReactZ->Fill(reactz);
-
-        //statics by foils
-        const UInt_t FoilID = (UInt_t) eventdata.Data[kCutID];
-        ndata_foil[FoilID]++;
-
-        dtg_vz_foil[FoilID] += eventdata.Data[kCalcReactZ] - eventdata.Data[kRealReactZ];
-        rmstg_vz_foil[FoilID] += (eventdata.Data[kCalcReactZ] - eventdata.Data[kRealReactZ])*(eventdata.Data[kCalcReactZ] - eventdata.Data[kRealReactZ]);
-
-        dtg_y_foil[FoilID] += eventdata.Data[kCalcTgY] - eventdata.Data[kRealTgY];
-        rmstg_y_foil[FoilID] += (eventdata.Data[kCalcTgY] - eventdata.Data[kRealTgY])*(eventdata.Data[kCalcTgY] - eventdata.Data[kRealTgY]);
+        dtg_y += eventdata.Data[kCalcTgY] - eventdata.Data[kRealTgY];
+        dtg_y_rms += (eventdata.Data[kCalcTgY] - eventdata.Data[kRealTgY])*(eventdata.Data[kCalcTgY] - eventdata.Data[kRealTgY]);
     }
 
-    DEBUG_INFO("CheckVertex", "dtg_vz = %f,\t dtg_vz_rms = %f", dtg_vz / fNRawData, dtg_vz_rms / fNRawData);
+    DEBUG_INFO("CheckTgY", "dtg_v = %f,\t dtg_v_rms = %f", dtg_y / fNRawData, dtg_y_rms / fNRawData);
 
-    TCanvas * c1 = new TCanvas("CheckVertex", "SieveCheck", 1800, 900);
-    c1->Divide(1, 4);
-    UInt_t idx = 1;
-
-    c1->cd(idx++);
-    hYVSReactZ->Draw("COLZ");
-    c1->cd(idx++);
-    hPhVSReactZ->Draw("COLZ");
-    c1->cd(idx++);
-    hrbxVSReactZ->Draw("COLZ");
-    c1->cd(idx++);
-    hReactZ->Draw();
-
-    for (idx = 1; idx <= 4; idx++) {
-        c1->cd(idx);
-
-        for (UInt_t FoilID = 0; FoilID < NFoils; FoilID++) {
-            const Double_t MaxPlot = 2000;
-
-            TLine *l = new TLine(targetfoils[FoilID], -MaxPlot, targetfoils[FoilID], +MaxPlot);
-            l->SetLineColor(6);
-            l->Draw();
-        }
+    TCanvas * c1;
+    if (nplot <= 3) {
+        c1 = new TCanvas("CheckTgY", "Target Y Check", 1800, 450);
+        c1->Divide(3, 1);
+    }
+    else if (nplot <= 6) {
+        c1 = new TCanvas("CheckTgY", "Target Y Check", 1800, 900);
+        c1->Divide(3, 2);
+    }
+    else {
+        c1 = new TCanvas("CheckTgY", "Target Y Check", 1800, 1350);
+        c1->Divide(3, 3);
     }
 
-    cout << "Statistic on each foils:\n";
-    cout << "Foil ID\td_vz\trms_vz\td_tgy\trms_tgy\n";
-    for (UInt_t FoilID = 0; FoilID < NFoils; FoilID++) {
-        // assert(ndata_foil[FoilID]);//at least 1 event on each foil
-        UInt_t N = ndata_foil[FoilID];
-        if (N <= 0) N = 1;
+    Double_t MaxPlot = 20000.0;
+    for (UInt_t idx = 0; idx < nplot; idx++) {
+        // UInt_t FoilID = idx;
 
-        printf("%d\t%f\t%f\t%f\t%f\n", FoilID, dtg_vz_foil[FoilID] / N, rmstg_vz_foil[FoilID] / N, dtg_y_foil[FoilID] / N, rmstg_y_foil[FoilID] / N);
+        c1->cd(idx + 1);
+        assert(HTgY[idx]);
+
+        HTgY[idx]->Draw();
+
+        Double_t mean = HTgYReal[idx]->GetMean();
+        TLine *l = new TLine(mean, 0, mean, MaxPlot);
+        l->SetLineColor(kRed);
+        l->SetLineWidth(2);
+        l->Draw();
+
+        Double_t DefResolution = 0.5e-3;
+        Double_t FitRangeMultiply = 5;
+
+        TString FitFunc = Form("YtPeak%d", idx);
+        TF1 *f = new TF1(FitFunc, "gaus+[3]", mean - DefResolution*FitRangeMultiply, mean + DefResolution * FitRangeMultiply);
+        f->SetParameter(1, mean);
+        f->SetParameter(2, DefResolution);
+        HTgY[idx] -> Fit(FitFunc, "RN0");
+        f->SetLineColor(2);
+        f->Draw("SAME");
+
+        TLatex *t = new TLatex(f->GetParameter(1) + DefResolution, f->GetParameter(0) + f->GetParameter(3), Form("\\Delta \\pm \\sigma = (%2.1f \\pm %2.1f) mm", 1000 * (f->GetParameter(1) - mean), 1000 * (f->GetParameter(2))));
+        t->SetTextSize(0.05);
+        t->SetTextAlign(12);
+        t->SetTextColor(2);
+        t->Draw();
     }
 
     return c1;
 }
 
 Double_t LOpticsOpt::SumSquareDTgY(void) {
-    //return square sum of diff between calculated tg_y and expected tg_y
+    // return square sum of diff between calculated tg_y and expected tg_y
 
     Double_t dtg_y = 0; //Difference
     Double_t dtg_y_rms = 0; //mean square
@@ -1635,18 +1674,18 @@ Double_t LOpticsOpt::SumSquareDTgY(void) {
         dtg_y += tg_y - eventdata.Data[kRealTgY] + ArbitaryVertexShift;
         dtg_y_rms += (tg_y - eventdata.Data[kRealTgY] + ArbitaryVertexShift)*(tg_y - eventdata.Data[kRealTgY] + ArbitaryVertexShift);
 
-        //save the results
+        // save the results
         eventdata.Data[kCalcTgY] = tg_y;
     }
 
-    DEBUG_INFO("SumSquareDTgY", "#%d : dtg_y = %f, dtg_y_rms=%f", NCall, dtg_y / fNRawData, TMath::Sqrt(dtg_y_rms / fNRawData));
+    DEBUG_INFO("SumSquareDTgY", "#%d : dtg_y = %f, dtg_y_rms = %f", NCall, dtg_y / fNRawData, TMath::Sqrt(dtg_y_rms / fNRawData));
 
     return dtg_y_rms;
 }
 
 Double_t LOpticsOpt::SumSquareDTgYAverFoils(void) {
-    //return square sum of diff between calculated tg_y and expected tg_y
-    //Statistical Weight on each foil is same
+    // return square sum of diff between calculated tg_y and expected tg_y
+    // Statistical Weight on each foil is same
 
     Double_t dtg_y = 0; //Difference
     Double_t dtg_y_rms = 0; //mean square
@@ -1680,13 +1719,12 @@ Double_t LOpticsOpt::SumSquareDTgYAverFoils(void) {
         dtg_y += tg_y - eventdata.Data[kRealTgY];
         dtg_y_rms += (tg_y - eventdata.Data[kRealTgY])*(tg_y - eventdata.Data[kRealTgY]);
 
-        //save the results
+        // save the results
         eventdata.Data[kCalcTgY] = tg_y;
 
-        //statics by foils
-        const UInt_t FoilID = (UInt_t) eventdata.Data[kCutID];
-        const Double_t ArbitaryVertexShift = //arbitary shifts
-                fArbitaryVertexShift[FoilID] * (-TMath::Sin(HRSAngle));
+        // statics by foils
+        const UInt_t FoilID = (UInt_t) eventdata.Data[kCutID] / (NSieveRow * NSieveCol * NKine);
+        const Double_t ArbitaryVertexShift = fArbitaryVertexShift[FoilID] * (-TMath::Sin(HRSAngle)); //arbitary shifts
         ndata_foil[FoilID]++;
         dtg_y_foil[FoilID] += eventdata.Data[kCalcTgY] - eventdata.Data[kRealTgY] + ArbitaryVertexShift;
         rmstg_y_foil[FoilID] += (eventdata.Data[kCalcTgY] - eventdata.Data[kRealTgY] + ArbitaryVertexShift)*(eventdata.Data[kCalcTgY] - eventdata.Data[kRealTgY] + ArbitaryVertexShift);
@@ -1704,29 +1742,29 @@ Double_t LOpticsOpt::SumSquareDTgYAverFoils(void) {
     dtg_y_foilaver = dtg_y_foilaver / NFoils*fNRawData;
     dtg_y_rms_foilaver = dtg_y_rms_foilaver / NFoils*fNRawData;
 
-    DEBUG_INFO("SumSquareDTgY", "#%d Foil Ave: dtg_y = %f, dtg_y_rms=%f", NCall, dtg_y_foilaver / fNRawData, TMath::Sqrt(dtg_y_rms_foilaver / fNRawData));
-    DEBUG_INFO("SumSquareDTgY", "#%d : dtg_y = %f, dtg_y_rms=%f", NCall, dtg_y / fNRawData, TMath::Sqrt(dtg_y_rms / fNRawData));
+    DEBUG_INFO("SumSquareDTgY", "#%d Foil Ave: dtg_y = %f, dtg_y_rms = %f", NCall, dtg_y_foilaver / fNRawData, TMath::Sqrt(dtg_y_rms_foilaver / fNRawData));
+    DEBUG_INFO("SumSquareDTgY", "#%d : dtg_y = %f, dtg_y_rms = %f", NCall, dtg_y / fNRawData, TMath::Sqrt(dtg_y_rms / fNRawData));
 
     return dtg_y_rms_foilaver;
 }
 
 void LOpticsOpt::PrepareDp(void) {
-    //calate expected dp_kin, dp_kin offsets ....
-    //Fill up fRawData[].Data[] kKineID thr kRealDpKin
+    // calate expected dp_kin, dp_kin offsets ....
+    // Fill up fRawData[].Data[] kKineID thr kRealDpKin
 
-    //print Central Momentums
+    // print Central Momentums
     printf("HRSCentralMom[%d] (GeV) = {", NKine);
     for (UInt_t KineID = 0; KineID < NKine; KineID++)
-        printf("%f  ", HRSCentralMom[KineID]*1000);
+        printf("%f  ", HRSCentralMom[KineID]);
     printf("}\n");
 
-    //print radiation loss numbers
+    // print radiation loss numbers
     printf("RadiationLossByFoil[%d] (MeV) = {", NFoils);
     for (UInt_t FoilID = 0; FoilID < NFoils; FoilID++)
         printf("%f  ", RadiationLossByFoil[FoilID]*1000);
     printf("}\n");
 
-    //set fDMatrixElems as current matrix to optimize
+    // set fDMatrixElems as current matrix to optimize
     fCurrentMatrixElems = &fDMatrixElems;
 
     Double_t dth = 0, dphi = 0, scatang = 0;
@@ -1739,7 +1777,7 @@ void LOpticsOpt::PrepareDp(void) {
 
         EventData &eventdata = fRawData[idx];
 
-        //decoding kCutID
+        // decoding kCutID
         UInt_t res = (UInt_t) eventdata.Data[kCutID];
 
         const UInt_t ExtraDataFlag = res / (NSieveRow * NSieveCol * NFoils * NKine);
@@ -1756,7 +1794,7 @@ void LOpticsOpt::PrepareDp(void) {
 
         DEBUG_MASSINFO("PrepareDp", "%d => KineID=%d,\tFoilID=%d,\tCol=%d,\tRow=%d", (UInt_t) eventdata.Data[kCutID], KineID, FoilID, Col, Row);
 
-        //write some variables
+        // write some variables
         eventdata.Data[kExtraDataFlag] = ExtraDataFlag;
         if (!ExtraDataFlag) fNCalibData++;
         eventdata.Data[kKineID] = KineID;
@@ -1779,6 +1817,7 @@ void LOpticsOpt::PrepareDp(void) {
 
         const Double_t x_tg = BeamSpotTCS.X() - BeamSpotTCS.Z() * eventdata.Data[kRealTh];
         eventdata.Data[kRealTgX] = x_tg;
+        eventdata.Data[kRealThMatrix] = eventdata.Data[kRealTh] - x_tg * ExtTarCor_ThetaCorr;
 
         DEBUG_MASSINFO("PrepareDp", "%d,%d,%d: D_Th = %f,\t D_Phi = %f", FoilID, Col, Row, eventdata.Data[kRealThMatrix] - eventdata.Data[kL_tr_tg_th], eventdata.Data[kRealPhi] - eventdata.Data[kL_tr_tg_ph]);
         DEBUG_MASSINFO("PrepareDp", "RealTh=%f,\tL_tr_tg_th=%f", eventdata.Data[kRealThMatrix], eventdata.Data[kL_tr_tg_th]);
@@ -1811,7 +1850,7 @@ void LOpticsOpt::PrepareDp(void) {
 
         DEBUG_MASSINFO("PrepareDp", "ScatterMom=%f,\t Centralp=%f,radloss = %f, ebeam=%f", ScatMom(DM, Ma, P0, TMath::Abs(HRSAngle)), eventdata.Data[kCentralp], eventdata.Data[kRadiLossDp], P0);
 
-        //Expected th ph before ext. target correction
+        // Expected th ph before ext. target correction
         // fDeltaTh = fThetaCorr * x_tg;
         // fDeltaDp = x_tg / fDeltaCorr;
         // Double_t theta = trkifo->GetTheta() + fDeltaTh;
@@ -1821,7 +1860,7 @@ void LOpticsOpt::PrepareDp(void) {
         exttargcorr_dp += x_tg / ExtTarCor_DeltaCorr;
         rms_exttargcorr_dp += (x_tg / ExtTarCor_DeltaCorr)*(x_tg / ExtTarCor_DeltaCorr);
 
-        //calcalculate expected dp_kin for all other exciation states
+        // calculate expected dp_kin for all other exciation states
         for (UInt_t ExcitID = 0; ExcitID < NExcitationStates; ExcitID++) {
             assert(kRealDpKinExcitations + ExcitID < kRealTh); //check array index size
             eventdata.Data[kRealDpKinExcitations + ExcitID] = ScatMom(ExcitationEnergyList[ExcitID], Ma, P0, TMath::Abs(HRSAngle)) / eventdata.Data[kCentralp] - 1;
@@ -1837,12 +1876,11 @@ void LOpticsOpt::PrepareDp(void) {
                 assert(TMath::Abs(eventdata.Data[kCentralp] - lasteventdata.Data[kCentralp]) < 1e-5); //check data continuity; check cut definition consistency
                 assert(TMath::Abs(eventdata.Data[kRealDpKin] - lasteventdata.Data[kRealDpKin]) < 4e-3); //check data continuity; check cut definition consistency
             }
-            else {//new run
+            else { // new run
                 DEBUG_INFO("PrepareDp", "Run %4.0f : Kinematics #%1.0f, Central p = %fGeV, Excit. State Selected=%f MeV, Dp Kin=%f%%", eventdata.Data[kRunNum], eventdata.Data[kKineID], eventdata.Data[kCentralp], 1000 * ExcitationEnergy[KineID], 100 * eventdata.Data[kRealDpKin]);
             }
         }
-        else {
-            //first run
+        else { // first run
             DEBUG_INFO("PrepareDp", "Run %4.0f : Kinematics #%1.0f, Central p = %fGeV, Excit. State Selected=%f MeV, Dp Kin=%f%%", eventdata.Data[kRunNum], eventdata.Data[kKineID], eventdata.Data[kCentralp], 1000 * ExcitationEnergy[KineID], 100 * eventdata.Data[kRealDpKin]);
         }
     }
@@ -1853,14 +1891,14 @@ void LOpticsOpt::PrepareDp(void) {
     DEBUG_INFO("PrepareDp", "Average DpKinOffsets = %f, RMS DpKinOffsets = %f", dpkinoff / fNRawData, TMath::Sqrt(dpkinoff_rms / fNRawData));
     DEBUG_INFO("PrepareDp", "Average Extended Target Corretion: dp = %f,\t rms_dp = %f", exttargcorr_dp / fNRawData, TMath::Sqrt(rms_exttargcorr_dp / fNRawData));
 
-    //make sure kCalcTh, kCalcPh is filled, although not necessary
+    // make sure kCalcTh, kCalcPh is filled, although not necessary
     SumSquareDTh();
     SumSquareDPhi();
     SumSquareDp();
 }
 
 Double_t LOpticsOpt::VerifyMatrix_Dp(void) {
-    //static summarize difference between tg_dp caculated from current database and those in root file
+    // static summarize difference between tg_dp calculated from current database and those in root file
 
     Double_t d_dp = 0; //Difference
     Double_t rms_dp = 0; //mean square
@@ -1900,11 +1938,11 @@ Double_t LOpticsOpt::VerifyMatrix_Dp(void) {
 }
 
 TCanvas * LOpticsOpt::CheckDp() {
-    //Visualize 1D hitogram of dp_kin
+    // Visualize 1D hitogram of dp_kin
 
     DEBUG_INFO("CheckDp", "Entry Point");
 
-    //calculate Data[kCalcDpKin] for all events
+    // calculate Data[kCalcDpKin] for all events
     SumSquareDp(kTRUE);
 
     const Double_t DpRange = .05;
@@ -2031,11 +2069,11 @@ TCanvas * LOpticsOpt::CheckDp() {
 }
 
 TCanvas * LOpticsOpt::CheckDpGlobal() {
-    //Visualize 1D hitogram of dp_kin
+    // Visualize 1D hitogram of dp_kin
 
     DEBUG_INFO("CheckDp", "Entry Point");
 
-    //calculate Data[kCalcDpKin] for all events
+    // calculate Data[kCalcDpKin] for all events
     SumSquareDp(kTRUE);
 
     const Double_t DpRange = .05;
@@ -2084,7 +2122,7 @@ TCanvas * LOpticsOpt::CheckDpGlobal() {
         }
     }
 
-    //fit & sum
+    // fit & sum
     for (UInt_t KineID = 0; KineID < NKine; KineID++) {
         AverCalcDpKin[KineID] /= NEvntDpKin[KineID];
         DEBUG_MASSINFO("CheckDp", "AverCalcDpKin[%d] = %f", KineID, AverCalcDpKin[KineID]);
@@ -2144,11 +2182,11 @@ TCanvas * LOpticsOpt::CheckDpGlobal() {
 }
 
 TCanvas * LOpticsOpt::CheckDpVSAngle() {
-    //Visualize 2D hitogram of Scattering Angle VS dp_kin
+    // Visualize 2D hitogram of Scattering Angle VS dp_kin
 
     DEBUG_INFO("CheckDpVSAngle", "Entry Point");
 
-    //calculate Data[kCalcDpKin] for all events
+    // calculate Data[kCalcDpKin] for all events
     SumSquareDp(kTRUE);
 
     const Double_t DpRange = .05;
@@ -2255,11 +2293,11 @@ TCanvas * LOpticsOpt::CheckDpVSAngle() {
 }
 
 TCanvas * LOpticsOpt::CheckDpVSCutID() {
-    //Visualize 2D hitogram of Sieve Hole+Foil ID VS dp_kin
+    // Visualize 2D hitogram of Sieve Hole+Foil ID VS dp_kin
 
     DEBUG_INFO("CheckDpVSCutID", "Entry Point");
 
-    //calculate Data[kCalcDpKin] for all events
+    // calculate Data[kCalcDpKin] for all events
     SumSquareDp(kTRUE);
 
     const Double_t DpRange = .05;
@@ -2388,7 +2426,7 @@ TCanvas * LOpticsOpt::CheckDpVSCutID() {
 }
 
 Double_t LOpticsOpt::SumSquareDp(Bool_t IncludeExtraData) {
-    //return square sum of diff between calculated dp_kin and expected dp_kin
+    // return square sum of diff between calculated dp_kin and expected dp_kin
 
     Double_t d_dp = 0; //Difference
     Double_t rms_dp = 0; //mean square
@@ -2402,7 +2440,6 @@ Double_t LOpticsOpt::SumSquareDp(Bool_t IncludeExtraData) {
         Warning("SumSquareDp", "Data Beyond selected excitation state is included in this calculation");
     }
     for (UInt_t idx = 0; idx < fNRawData; idx++) {
-
         Double_t dp, dp_kin;
 
         EventData &eventdata = fRawData[idx];
@@ -2435,7 +2472,7 @@ Double_t LOpticsOpt::SumSquareDp(Bool_t IncludeExtraData) {
 
         DEBUG_MASSINFO("SumSquareDp", "d_dp = %f = \t%f - \t%f", dp_kin - eventdata.Data[kRealDpKinMatrix], dp_kin, eventdata.Data[kRealDpKinMatrix]);
 
-        //save the results
+        // save the results
         eventdata.Data[kCalcDpKinMatrix] = dp_kin;
         eventdata.Data[kCalcDpKin] = dp_kin + eventdata.Data[kRealTgX] / ExtTarCor_DeltaCorr;
     }
@@ -2443,13 +2480,14 @@ Double_t LOpticsOpt::SumSquareDp(Bool_t IncludeExtraData) {
     if (!IncludeExtraData)
         assert(fNCalibData == NCalibData); // check number of event for calibration
 
-    DEBUG_INFO("SumSquareDp", "#%d : d_dp = %f,rms_dp=%f", NCall, d_dp / NCalibData, TMath::Sqrt(rms_dp / NCalibData));
+    DEBUG_INFO("SumSquareDp", "#%d : d_dp = %f, rms_dp = %f", NCall, d_dp / NCalibData, TMath::Sqrt(rms_dp / NCalibData));
 
     return rms_dp;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // declarations for target vertex reconstruction
+///////////////////////////////////////////////////////////////////////////////
 
 void LOpticsOpt::CalcMatrix(const Double_t x, vector<THaMatrixElement>& matrix) {
     // calculates the values of the matrix elements for a given location
@@ -2468,8 +2506,7 @@ void LOpticsOpt::CalcMatrix(const Double_t x, vector<THaMatrixElement>& matrix) 
     }
 }
 
-Double_t LOpticsOpt::CalcTargetVar(const vector<THaMatrixElement>& matrix,
-        const Double_t powers[][5]) {
+Double_t LOpticsOpt::CalcTargetVar(const vector<THaMatrixElement>& matrix, const Double_t powers[][5]) {
     // calculates the value of a variable at the target
     // the x-dependence is already in the matrix, so only 1-3 (or np) used
     Double_t retval = 0.0;
@@ -2490,8 +2527,9 @@ Double_t LOpticsOpt::CalcTargetVar(const vector<THaMatrixElement>& matrix,
     return retval;
 }
 
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 // class for storing matrix element data
+///////////////////////////////////////////////////////////////////////////////
 
 bool THaMatrixElement::match(const THaMatrixElement& rhs) const {
     // Compare coefficients of this matrix element to another
@@ -2506,7 +2544,7 @@ bool THaMatrixElement::match(const THaMatrixElement& rhs) const {
 }
 
 void THaMatrixElement::SkimPoly() {
-    //reduce order to highest non-zero poly
+    // reduce order to highest non-zero poly
 
     if (iszero) return;
 

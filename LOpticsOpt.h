@@ -64,7 +64,7 @@ public:
 
     ///////////////////////////////////////////////////////////////////////////
     // Database input/output
-
+    ///////////////////////////////////////////////////////////////////////////
     TString OldComments;
     Int_t LoadDataBase(TString DataBaseName); //Database file -> Memory
     Int_t SaveDataBase(TString DataBaseName); //Memory -> Database file
@@ -87,8 +87,8 @@ public:
 
     ///////////////////////////////////////////////////////////////////////////
     // Data storage
-
-    UInt_t LoadRawData(TString DataFileName, Double_t OverwriteX = -10.0, UInt_t NLoad = MaxNRawData, UInt_t MaxDataPerGroup = (UInt_t) - 1); //load data to Rawdata[]
+    ///////////////////////////////////////////////////////////////////////////
+    UInt_t LoadRawData(TString DataFileName, UInt_t NLoad = MaxNRawData, UInt_t MaxDataPerGroup = (UInt_t) - 1); //load data to Rawdata[]
     UInt_t SaveDataBuffer(TTree * T); //save Rawdata[] to T Tree. return N event written
     UInt_t SaveDataBuffer(TString fname, TString tree = "T"); //save Rawdata[] to file
 
@@ -156,22 +156,22 @@ public:
     };
 
     ///////////////////////////////////////////////////////////////////////////
-    //Optimization related Commands
-
+    // Optimization related Commands
+    ///////////////////////////////////////////////////////////////////////////
     const TVector3 GetSieveHoleTCS(UInt_t Col, UInt_t Row);
 
     void PrepareSieve(void);
     Double_t VerifyMatrix_Sieve(void);
-    TCanvas* CheckSieve(UInt_t SpecialNLoad = -1);
+    TCanvas* CheckSieve(Int_t PlotFoilID = 0);
     Double_t SumSquareDTh(Bool_t PrintEachHole = kFALSE);
     Double_t SumSquareDPhi(Bool_t PrintEachHole = kFALSE);
-    Double_t SumSquareDThUBeam(void);
-    Double_t SumSquareDPhiUBeam(void);
+    Double_t SumSquareDBeamX(void);
+    Double_t SumSquareDBeamY(void);
 
     Double_t fArbitaryVertexShift[100]; //compensate bias due to event selections, array of [FoilID]
-    void PrepareVertex(void);
-    Double_t VerifyMatrix_Vertex(void);
-    TCanvas* CheckVertex(void);
+    void PrepareTgY(void);
+    Double_t VerifyMatrix_TgY(void);
+    TCanvas* CheckTgY(void);
     Double_t SumSquareDTgY();
     Double_t SumSquareDTgYAverFoils();
 
@@ -196,6 +196,7 @@ public:
 
     ///////////////////////////////////////////////////////////////////////////
     // declarations for target vertex reconstruction
+    ///////////////////////////////////////////////////////////////////////////
 
     enum ECoordTypes {
         kTransport, kRotatingTransport
@@ -231,6 +232,7 @@ public:
 
     ///////////////////////////////////////////////////////////////////////////
     // Inherited from THaTrackingDetector
+    ///////////////////////////////////////////////////////////////////////////
 
     virtual Int_t Decode(const THaEvData&) {
         return 0;
@@ -248,11 +250,13 @@ public:
         return fStatus = kOK;
     };
 
+private:
     ClassDef(LOpticsOpt, 0) // HRS Optics Optimizer
 };
 
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 // class for storing matrix element data
+///////////////////////////////////////////////////////////////////////////////
 
 class THaMatrixElement {
 public:

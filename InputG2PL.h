@@ -18,7 +18,7 @@ const TString InputID = "G2P_LHRS";
 const Double_t D2R = TMath::Pi() / 180.;
 
 // G2P: set as central sieve hole angle
-const Double_t HRSAngle = 5.767 * D2R; //WARNING: check
+const Double_t HRSAngle = 5.785 * D2R; //WARNING: check
 
 // MissPoint* are in HCS
 const Double_t MissPointZ = 0.0; //mm
@@ -41,14 +41,12 @@ const Double_t ZPos = 799.60 * 1e-3; //800.
 
 /////////////////////////////////////////////////////////////////////////
 // Vertex Position Inputs
-
 static const UInt_t NFoils = 1; //WARNING: check
 const Double_t targetfoils[] = {-13.6271 * 1e-3, 1e36}; // At end-cap, not target ladder -10.81mm
 
 /////////////////////////////////////////////////////////////////////////
 // Excitation State Inputs
-
-const UInt_t NKine = 1; //N Delta Scans
+const UInt_t NKine = 5; //N Delta Scans
 
 #define DIPOLE_MAG2MOM(Mag) (2.702*(Mag)-1.6e-03*(Mag)*(Mag)*(Mag))
 const Double_t HRSCentralMom[] = {

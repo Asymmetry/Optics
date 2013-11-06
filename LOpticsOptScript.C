@@ -71,7 +71,7 @@ void myfcn12(Int_t &, Double_t *, Double_t &f, Double_t *par, Int_t) {
     assert(opt->fCurrentMatrixElems);
 
     opt->Array2Matrix(par);
-    f = opt->SumSquareDThUBeam();
+    f = opt->SumSquareDBeamX();
 
     return;
 }
@@ -83,7 +83,31 @@ void myfcn22(Int_t &, Double_t *, Double_t &f, Double_t *par, Int_t) {
     assert(opt->fCurrentMatrixElems);
 
     opt->Array2Matrix(par);
-    f = opt->SumSquareDPhiUBeam();
+    f = opt->SumSquareDBeamY();
+
+    return;
+}
+
+void myfcn3(Int_t &, Double_t *, Double_t &f, Double_t *par, Int_t) {
+    //compute the sum of squares of dph
+
+    assert(opt);
+    assert(opt->fCurrentMatrixElems);
+
+    opt->Array2Matrix(par);
+    f = opt->SumSquareDTgY();
+
+    return;
+}
+
+void myfcn4(Int_t &, Double_t *, Double_t &f, Double_t *par, Int_t) {
+    //compute the sum of squares of dph
+
+    assert(opt);
+    assert(opt->fCurrentMatrixElems);
+
+    opt->Array2Matrix(par);
+    f = opt->SumSquareDp();
 
     return;
 }
@@ -96,7 +120,7 @@ void DoMinTP(TString SourceDataBase, TString DestDataBase, UInt_t MaxDataPerGrou
 
     opt->LoadDataBase(SourceDataBase);
     NPara = opt->Matrix2Array(OldMatrixArray, free);
-    opt->LoadRawData(DataSource, OverX, (UInt_t) - 1, MaxDataPerGroup);
+    opt->LoadRawData(DataSource, (UInt_t) - 1, MaxDataPerGroup);
     opt->PrepareSieve();
     //opt->VerifyMatrix_Sieve();
 
@@ -132,34 +156,154 @@ void DoMinTP(TString SourceDataBase, TString DestDataBase, UInt_t MaxDataPerGrou
 
     opt->SumSquareDTh();
     opt->SumSquareDPhi();
+
     TCanvas * c1 = opt->CheckSieve();
     c1->Print(DestDataBase + ".Sieve.Opt.png", "png");
-    // delete fitter;
+
+    delete fitter;
 }
 
-void PlotDataBase(TString DatabaseFileName, UInt_t MaxDataPerGroup = 1000) {
-    opt = new LOpticsOpt();
+void DoMinY(TString SourceDataBase, TString DestDataBase, UInt_t MaxDataPerGroup = 200) {
+    // minimize with root
 
     assert(opt);
+    assert(opt->fCurrentMatrixElems);
 
-    gStyle->SetOptStat(0);
+    opt->LoadDataBase(SourceDataBase);
+    NPara = opt->Matrix2Array(OldMatrixArray, free);
+    opt->LoadRawData(DataSource, (UInt_t) - 1, MaxDataPerGroup);
+    opt->PrepareTgY();
+    //opt->VerifyMatrix_TgY();
 
-    opt->LoadDataBase(DatabaseFileName);
     opt->Print();
 
-    opt->LoadRawData(DataSource, OverX, (UInt_t) - 1, MaxDataPerGroup);
+    TVirtualFitter::SetDefaultFitter("Minuit2"); //default is Minuit
+    TVirtualFitter *fitter = TVirtualFitter::Fitter(NULL, NPara);
+    fitter->SetFCN(myfcn);
 
-    opt->PrepareSieve();
-    opt->VerifyMatrix_Sieve();
+    for (UInt_t i = 0; i < NPara; i++) {
+        Double_t absold = TMath::Abs(OldMatrixArray[i]);
+        Double_t abslimit = absold > 0 ? absold * 10000 : 10000;
 
-    opt->SumSquareDTh(kTRUE);
-    opt->SumSquareDPhi(kTRUE);
+        fitter->SetParameter(i, Form("TMatrix%03d", i), OldMatrixArray[i], absold > 0 ? absold / 10 : 0.1, -abslimit, abslimit);
+        // fitter->SetParameter(1,"asdf",0,0,0,0);
+
+        if (!free[i]) fitter->FixParameter(i);
+    }
+
+    fitter->Print();
+    cout << fitter->GetNumberFreeParameters() << " Free  / " << fitter->GetNumberTotalParameters() << " Parameters\n";
+
+    assert(opt->fNRawData > 0);
+    assert(NPara > 0);
+    assert(fitter->GetNumberFreeParameters() > 0);
+    assert(fitter->GetNumberTotalParameters() == NPara);
+
+    Double_t arglist[1] = {0};
+    fitter->ExecuteCommand("MIGRAD", arglist, 0);
+
+    opt->Print();
+    opt->SaveDataBase(DestDataBase);
+
+    opt->SumSquareDTgY();
 
     TCanvas * c1 = opt->CheckSieve();
-    SaveCanvas(c1, DatabaseFileName + ".Sieve");
+    c1->Print(DestDataBase + ".TgY.Opt.png", "png");
 
-    delete opt;
+    delete fitter;
 }
+
+void DoMinDp(TString SourceDataBase, TString DestDataBase, UInt_t MaxDataPerGroup = 200) {
+    // minimize with root
+
+    assert(opt);
+    assert(opt->fCurrentMatrixElems);
+
+    cout << "Optimizing for dp\n";
+    opt->fCurrentMatrixElems = &(opt->fDMatrixElems);
+
+    opt->LoadDataBase(SourceDataBase);
+    NPara = opt->Matrix2Array(OldMatrixArray, free);
+    opt->LoadRawData(DataSource, (UInt_t) - 1, MaxDataPerGroup);
+    opt->PrepareDp();
+    //opt->VerifyMatrix_Sieve();
+    //opt->VerifyMatrix_Dp();
+
+    //compensate bias due to dp event selections
+    // 	opt->fArbitaryDpKinShift[0] = 2.786177e-05;
+    // 	opt->fArbitaryDpKinShift[1] = 8.168538e-05;
+    // 	opt->fArbitaryDpKinShift[2] = 5.299596e-05;
+    // 	opt->fArbitaryDpKinShift[3] = 3.175602e-05;
+    // 	opt->fArbitaryDpKinShift[4] = 9.519830e-05;
+
+    opt->fArbitaryDpKinShift[0] = 0.;
+    opt->fArbitaryDpKinShift[1] = 0.;
+    opt->fArbitaryDpKinShift[2] = 0.;
+    opt->fArbitaryDpKinShift[3] = 0.;
+    opt->fArbitaryDpKinShift[4] = 0.;
+
+    opt->Print();
+
+    TVirtualFitter::SetDefaultFitter("Minuit2"); //default is Minuit
+    TVirtualFitter *fitter = TVirtualFitter::Fitter(NULL, NPara);
+    fitter->SetFCN(myfcn);
+
+    for (UInt_t i = 0; i < NPara; i++) {
+        Double_t absold = TMath::Abs(OldMatrixArray[i]);
+        Double_t abslimit = absold > 0 ? absold * 10000 : 10000;
+
+        fitter->SetParameter(i, Form("TMatrix%03d", i), OldMatrixArray[i],
+                absold > 0 ? absold / 10 : 0.1, -abslimit, abslimit);
+        // 		fitter->SetParameter(1,"asdf",0,0,0,0);
+
+        if (!free[i]) fitter->FixParameter(i);
+    }
+
+    fitter->Print();
+    cout << fitter->GetNumberFreeParameters() << " Free  / " << fitter->GetNumberTotalParameters() << " Parameters\n";
+
+    assert(opt->fNRawData > 0);
+    assert(NPara > 0);
+    assert(fitter->GetNumberFreeParameters() > 0);
+    assert(fitter->GetNumberTotalParameters() == NPara);
+
+    Double_t arglist[1] = {0};
+    fitter->ExecuteCommand("MIGRAD", arglist, 0);
+
+    opt->Print();
+    opt->SaveDataBase(DestDataBase);
+
+    opt->SumSquareDp();
+
+    TCanvas * c1 = opt->CheckDp();
+    c1->Print(DestDataBase + ".Dp.Opt.png", "png");
+
+    delete fitter;
+}
+
+//void PlotDataBase(TString DatabaseFileName, UInt_t MaxDataPerGroup = 1000) {
+//    opt = new LOpticsOpt();
+//
+//    assert(opt);
+//
+//    gStyle->SetOptStat(0);
+//
+//    opt->LoadDataBase(DatabaseFileName);
+//    opt->Print();
+//
+//    opt->LoadRawData(DataSource, OverX, (UInt_t) - 1, MaxDataPerGroup);
+//
+//    opt->PrepareSieve();
+//    opt->VerifyMatrix_Sieve();
+//
+//    opt->SumSquareDTh(kTRUE);
+//    opt->SumSquareDPhi(kTRUE);
+//
+//    TCanvas * c1 = opt->CheckSieve();
+//    SaveCanvas(c1, DatabaseFileName + ".Sieve");
+//
+//    delete opt;
+//}
 
 void LOpticsOptScript(TString select, TString SourceDataBase, TString DestDataBase) {
     opt = new LOpticsOpt();
@@ -167,8 +311,8 @@ void LOpticsOptScript(TString select, TString SourceDataBase, TString DestDataBa
     map<TString, Int_t> selectmap;
     selectmap["theta"] = 1;
     selectmap["phi"] = 2;
-    selectmap["delta"] = 3;
-    selectmap["y"] = 4;
+    selectmap["y"] = 3;
+    selectmap["delta"] = 4;
     selectmap["theta2"] = 12;
     selectmap["phi2"] = 22;
 
@@ -188,10 +332,17 @@ void LOpticsOptScript(TString select, TString SourceDataBase, TString DestDataBa
         DoMinTP(SourceDataBase, DestDataBase, 500);
         break;
     case 3:
-        cout << "Optimizing for Delta\n";
+        cout << "Optimizing for Y\n";
+        myfcn = myfcn4;
+        opt->fCurrentMatrixElems = &(opt->fDMatrixElems);
+        DoMinY(SourceDataBase, DestDataBase, 5000);
+        break;
         break;
     case 4:
-        cout << "Optimizing for Y\n";
+        cout << "Optimizing for Delta\n";
+        myfcn = myfcn4;
+        opt->fCurrentMatrixElems = &(opt->fDMatrixElems);
+        DoMinDp(SourceDataBase, DestDataBase, 5000);
         break;
     case 12:
         cout << "Optimizing for Theta\n";
