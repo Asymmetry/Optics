@@ -1163,7 +1163,8 @@ Double_t LOpticsOpt::SumSquareDTh(Bool_t PrintEachHole) {
         eventdata.Data[kCalcTh] = theta;
     }
 
-    DEBUG_INFO("SumSquareDTh", "#%d : dth = %f, rmsth = %f", NCall, dth / fNRawData, TMath::Sqrt(rmsth / fNRawData));
+    // DEBUG_INFO("SumSquareDTh", "#%d : dth = %f, rmsth = %f", NCall, dth / fNRawData, TMath::Sqrt(rmsth / fNRawData));
+    printf("SumSquareDTh: #%d : dth = %f, rmsth = %f\n", NCall, dth / fNRawData, TMath::Sqrt(rmsth / fNRawData));
 
     if (PrintEachHole) {
         DEBUG_INFO("SumSquareDTh", "Print Deviation and RMS of each hole:");
@@ -1278,7 +1279,8 @@ Double_t LOpticsOpt::SumSquareDPhi(Bool_t PrintEachHole) {
         eventdata.Data[kCalcPh] = phi;
     }
 
-    DEBUG_INFO("SumSquareDPhi", "#%d : dphi = %f, rmsphi = %f", NCall, dphi / fNRawData, TMath::Sqrt(rmsphi / fNRawData));
+    // DEBUG_INFO("SumSquareDPhi", "#%d : dphi = %f, rmsphi = %f", NCall, dphi / fNRawData, TMath::Sqrt(rmsphi / fNRawData));
+    printf("SumSquareDPhi: #%d : dphi = %f, rmsphi = %f\n", NCall, dphi / fNRawData, TMath::Sqrt(rmsphi / fNRawData));
 
     if (PrintEachHole) {
         DEBUG_INFO("SumSquareDTh", "Print Deviation and RMS of each hole:");
@@ -1391,7 +1393,7 @@ Double_t LOpticsOpt::SumSquareDBeamX(void) {
             Double_t n = nxlab[i];
             Double_t rms = TMath::Sqrt(sum2 / n - (sum / n)*(sum / n));
             rmsxlab += rms;
-            DEBUG_INFO("SumSquareDBeamX", "#%d : xlab(%d) = %f, rmsxlab(%d) = %f", NCall, i, sum / n, i, rms);
+            printf("SumSquareDBeamX: #%d : xlab(%d) = %f, rmsxlab(%d) = %f\n", NCall, i, sum / n, i, rms);
         }
 
     return rmsxlab;
@@ -1452,7 +1454,7 @@ Double_t LOpticsOpt::SumSquareDBeamY(void) {
             Double_t n = nylab[i];
             Double_t rms = TMath::Sqrt(sum2 / n - (sum / n)*(sum / n));
             rmsylab += rms;
-            DEBUG_INFO("SumSquareDBeamY", "#%d : ylab(%d) = %f, rmsylab(%d) = %f", NCall, i, sum / n, i, rms);
+            printf("SumSquareDBeamY: #%d : ylab(%d) = %f, rmsylab(%d) = %f\n", NCall, i, sum / n, i, rms);
         }
 
     return rmsylab;
@@ -1678,7 +1680,8 @@ Double_t LOpticsOpt::SumSquareDTgY(void) {
         eventdata.Data[kCalcTgY] = tg_y;
     }
 
-    DEBUG_INFO("SumSquareDTgY", "#%d : dtg_y = %f, dtg_y_rms = %f", NCall, dtg_y / fNRawData, TMath::Sqrt(dtg_y_rms / fNRawData));
+    //DEBUG_INFO("SumSquareDTgY", "#%d : dtg_y = %f, dtg_y_rms = %f", NCall, dtg_y / fNRawData, TMath::Sqrt(dtg_y_rms / fNRawData));
+    printf("SumSquareDTgY: #%d : dtg_y = %f, dtg_y_rms = %f\n", NCall, dtg_y / fNRawData, TMath::Sqrt(dtg_y_rms / fNRawData));
 
     return dtg_y_rms;
 }
@@ -2480,7 +2483,8 @@ Double_t LOpticsOpt::SumSquareDp(Bool_t IncludeExtraData) {
     if (!IncludeExtraData)
         assert(fNCalibData == NCalibData); // check number of event for calibration
 
-    DEBUG_INFO("SumSquareDp", "#%d : d_dp = %f, rms_dp = %f", NCall, d_dp / NCalibData, TMath::Sqrt(rms_dp / NCalibData));
+    // DEBUG_INFO("SumSquareDp", "#%d : d_dp = %f, rms_dp = %f", NCall, d_dp / NCalibData, TMath::Sqrt(rms_dp / NCalibData));
+    printf("SumSquareDp: #%d : d_dp = %f, rms_dp = %f\n", NCall, d_dp / NCalibData, TMath::Sqrt(rms_dp / NCalibData));
 
     return rms_dp;
 }
