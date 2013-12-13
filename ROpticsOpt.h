@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// LOpticsOpt
+// ROpticsOpt
 //
 // HRS optics matrix optimization class
 // Based on THaVDC
@@ -18,8 +18,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef ROOT_LOpticsOpt
-#define ROOT_LOpticsOpt
+#ifndef ROOT_ROpticsOpt
+#define ROOT_ROpticsOpt
 
 #include <vector>
 
@@ -57,10 +57,10 @@ class TVector3;
 
 class THaMatrixElement;
 
-class LOpticsOpt : public THaTrackingDetector {
+class ROpticsOpt : public THaTrackingDetector {
 public:
-    LOpticsOpt(const char* name = "Optimizer", const char* description = "Optimizer for HRS Optics", THaApparatus* a = NULL);
-    virtual ~LOpticsOpt();
+    ROpticsOpt(const char* name = "Optimizer", const char* description = "Optimizer for HRS Optics", THaApparatus* a = NULL);
+    virtual ~ROpticsOpt();
 
     ///////////////////////////////////////////////////////////////////////////
     // Database input/output
@@ -106,14 +106,14 @@ public:
 
     enum CommonIdx {
         kCutID = 0, //cut ID in order of tree2asc cut file
-        kX = 1, //L.tr.r_x
-        kTh = 2, //L.tr.r_th
-        kY = 3, //L.tr.r_y
-        kPhi = 4, //L.tr.r_ph
+        kX = 1, //R.tr.r_x
+        kTh = 2, //R.tr.r_th
+        kY = 3, //R.tr.r_y
+        kPhi = 4, //R.tr.r_ph
         kBeamX = 5, //urb.x or rb.x
         kBeamY = 6, //urb.y or rb.y
-        kL_tr_tg_th = 7, //L.tr.tg_th
-        kL_tr_tg_ph = 8 //L.tr.tg_ph
+        kR_tr_tg_th = 7, //R.tr.tg_th
+        kR_tr_tg_ph = 8 //R.tr.tg_ph
     };
 
     enum ExtraSieveIdx {
@@ -130,7 +130,7 @@ public:
     };
 
     enum ExtraVertexIdx {
-        kL_tr_tg_y = 9, //L.tr.tg_y
+        kR_tr_tg_y = 9, //R.tr.tg_y
         kRealTgY, //Expected Tg_y from Survey and
         kRealReactZ, //expected ReactZ
         kCalcTgY, //calculated Tg_y
@@ -138,8 +138,8 @@ public:
     };
 
     enum ExtraDpIdx {
-        kL_tr_tg_dp = 9, //L.tr.tg_dp
-        kL_tr_p, //L.tr.p
+        kR_tr_tg_dp = 9, //R.tr.tg_dp
+        kR_tr_p, //R.tr.p
         kurb_e, //Beam energy
         kRunNum, //Run number
         kExtraDataFlag, //Whether this event is for optimization; 0=used for optimization, 1=for plotting only
@@ -255,7 +255,7 @@ public:
     };
 
 private:
-    ClassDef(LOpticsOpt, 0) // HRS Optics Optimizer
+    ClassDef(ROpticsOpt, 0) // HRS Optics Optimizer
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -265,7 +265,7 @@ private:
 class THaMatrixElement {
 public:
 
-    THaMatrixElement() : iszero(true), pw(3), order(0), v(0), poly(LOpticsOpt::kPORDER), OptOrder(0)
+    THaMatrixElement() : iszero(true), pw(3), order(0), v(0), poly(ROpticsOpt::kPORDER), OptOrder(0)
     {
     }
     bool match(const THaMatrixElement& rhs) const;

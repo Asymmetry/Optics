@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// LOpticsOpt
+// ROpticsOpt
 //
 // HRS optics matrix optimization class
 // Based on THaVDC
@@ -49,7 +49,7 @@
 #include "THaSpectrometer.h"
 #include "VarDef.h"
 
-#include "LOpticsOpt.h"
+#include "ROpticsOpt.h"
 
 #ifdef WITH_DEBUG
 #include <iostream>
@@ -62,13 +62,13 @@ using THaString::Split;
 // Input Sections
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "InputG2PL.h"
+#include "InputG2PR.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Constructors
 ///////////////////////////////////////////////////////////////////////////////
 
-LOpticsOpt::LOpticsOpt(const char* name, const char* description, THaApparatus* apparatus) :
+ROpticsOpt::ROpticsOpt(const char* name, const char* description, THaApparatus* apparatus) :
 THaTrackingDetector(name, description, apparatus)
 {
     fPrefix = new char[1000];
@@ -82,8 +82,8 @@ THaTrackingDetector(name, description, apparatus)
     fTCSInHCS.RotateAxes(TCSX, TCSY, TCSZ);
 
     fPointingOffset.SetXYZ(-MissPointZ * TMath::Sin(HRSAngle) * TMath::Cos(HRSAngle), MissPointY, MissPointZ * TMath::Sin(HRSAngle) * TMath::Sin(HRSAngle));
-    DEBUG_INFO("LOpticsOpt", "Read in configuration " + InputID);
-    DEBUG_INFO("LOpticsOpt", "HRS @ %f Degree, PointingOffset = (%f,%f,%f), SievePos = (%f,%f,%f)", HRSAngle / TMath::Pi()*180, fPointingOffset.X(), fPointingOffset.Y(), fPointingOffset.Z(), SieveOffX, SieveOffY, ZPos);
+    DEBUG_INFO("ROpticsOpt", "Read in configuration " + InputID);
+    DEBUG_INFO("ROpticsOpt", "HRS @ %f Degree, PointingOffset = (%f,%f,%f), SievePos = (%f,%f,%f)", HRSAngle / TMath::Pi()*180, fPointingOffset.X(), fPointingOffset.Y(), fPointingOffset.Z(), SieveOffX, SieveOffY, ZPos);
 
     fNRawData = 0;
 
@@ -91,7 +91,7 @@ THaTrackingDetector(name, description, apparatus)
         fArbitaryDpKinShift[i] = fArbitaryVertexShift[i] = 0;
 }
 
-LOpticsOpt::~LOpticsOpt()
+ROpticsOpt::~ROpticsOpt()
 {
     // Destructor.
 }
@@ -100,7 +100,7 @@ LOpticsOpt::~LOpticsOpt()
 // Database I/O
 ///////////////////////////////////////////////////////////////////////////////
 
-Int_t LOpticsOpt::LoadDataBase(TString DataBaseName)
+Int_t ROpticsOpt::LoadDataBase(TString DataBaseName)
 {
     static const char* const here = "LoadDataBase";
     OldComments = "";
@@ -316,7 +316,7 @@ Int_t LOpticsOpt::LoadDataBase(TString DataBaseName)
     return kOK;
 }
 
-Int_t LOpticsOpt::SaveDataBase(TString DataBaseName)
+Int_t ROpticsOpt::SaveDataBase(TString DataBaseName)
 {
     // Output database in memory to new database file
     // WARNING: Hard coded text included
@@ -481,7 +481,7 @@ Int_t LOpticsOpt::SaveDataBase(TString DataBaseName)
     return kOK;
 }
 
-void LOpticsOpt::Print(const Option_t* opt) const
+void ROpticsOpt::Print(const Option_t* opt) const
 {
     // Print current matrix
 
@@ -502,7 +502,7 @@ void LOpticsOpt::Print(const Option_t* opt) const
     //        printf("\n");
     //    }
 
-    printf("LOpticsOpt::Print: Transport Matrix:  D-terms\n");
+    printf("ROpticsOpt::Print: Transport Matrix:  D-terms\n");
     for (vsiz_t i = 0; i < fDMatrixElems.size(); i++) {
         const THaMatrixElement& m = fDMatrixElems[i];
         for (vsiz_t j = 0; j < m.pw.size(); j++) {
@@ -516,7 +516,7 @@ void LOpticsOpt::Print(const Option_t* opt) const
         printf("\n");
     }
 
-    printf("LOpticsOpt::Print: Transport Matrix:  T-terms\n");
+    printf("ROpticsOpt::Print: Transport Matrix:  T-terms\n");
     for (vsiz_t i = 0; i < fTMatrixElems.size(); i++) {
         const THaMatrixElement& m = fTMatrixElems[i];
         for (vsiz_t j = 0; j < m.pw.size(); j++) {
@@ -530,7 +530,7 @@ void LOpticsOpt::Print(const Option_t* opt) const
         printf("\n");
     }
 
-    printf("LOpticsOpt::Print: Transport Matrix:  Y-terms\n");
+    printf("ROpticsOpt::Print: Transport Matrix:  Y-terms\n");
     for (vsiz_t i = 0; i < fYMatrixElems.size(); i++) {
         const THaMatrixElement& m = fYMatrixElems[i];
         for (vsiz_t j = 0; j < m.pw.size(); j++) {
@@ -557,7 +557,7 @@ void LOpticsOpt::Print(const Option_t* opt) const
     //        printf("\n");
     //    }
 
-    printf("LOpticsOpt::Print: Transport Matrix:  P-terms\n");
+    printf("ROpticsOpt::Print: Transport Matrix:  P-terms\n");
     for (vsiz_t i = 0; i < fPMatrixElems.size(); i++) {
         const THaMatrixElement& m = fPMatrixElems[i];
         for (vsiz_t j = 0; j < m.pw.size(); j++) {
@@ -609,7 +609,7 @@ void LOpticsOpt::Print(const Option_t* opt) const
     return;
 }
 
-UInt_t LOpticsOpt::Matrix2Array(Double_t Array[], const std::vector<THaMatrixElement> &Matrix, Bool_t FreeParaFlag[])
+UInt_t ROpticsOpt::Matrix2Array(Double_t Array[], const std::vector<THaMatrixElement> &Matrix, Bool_t FreeParaFlag[])
 {
     // Matrix -> Array
 
@@ -635,7 +635,7 @@ UInt_t LOpticsOpt::Matrix2Array(Double_t Array[], const std::vector<THaMatrixEle
     return idx;
 }
 
-UInt_t LOpticsOpt::Array2Matrix(const Double_t Array[], std::vector<THaMatrixElement> &Matrix)
+UInt_t ROpticsOpt::Array2Matrix(const Double_t Array[], std::vector<THaMatrixElement> &Matrix)
 {
     // Array -> fCurrentMatrixElems
 
@@ -674,7 +674,7 @@ UInt_t LOpticsOpt::Array2Matrix(const Double_t Array[], std::vector<THaMatrixEle
 // Data storage
 ///////////////////////////////////////////////////////////////////////////////
 
-UInt_t LOpticsOpt::LoadRawData(TString DataFileName, UInt_t NLoad, UInt_t MaxDataPerGroup)
+UInt_t ROpticsOpt::LoadRawData(TString DataFileName, UInt_t NLoad, UInt_t MaxDataPerGroup)
 {
     // Load "f51" ascii data file to Rawdata[]
 
@@ -770,7 +770,7 @@ UInt_t LOpticsOpt::LoadRawData(TString DataFileName, UInt_t NLoad, UInt_t MaxDat
     return NRead;
 }
 
-UInt_t LOpticsOpt::SaveDataBuffer(TTree * T)
+UInt_t ROpticsOpt::SaveDataBuffer(TTree * T)
 {
     // Save Rawdata[] to T Tree. return N event written
 
@@ -787,8 +787,8 @@ UInt_t LOpticsOpt::SaveDataBuffer(TTree * T)
     T->Branch("data.fp.r_p", &(eventdata.Data[kPhi]), "data.fp.r_p/D");
     T->Branch("data.bpm.l_x", &(eventdata.Data[kBeamX]), "data.bpm.l_x/D");
     T->Branch("data.bpm.l_y", &(eventdata.Data[kBeamY]), "data.bpm.l_y/D");
-    T->Branch("data.tg.t", &(eventdata.Data[kL_tr_tg_th]), "data.tg.t/D");
-    T->Branch("data.tg.p", &(eventdata.Data[kL_tr_tg_ph]), "data.tg.p/D");
+    T->Branch("data.tg.t", &(eventdata.Data[kR_tr_tg_th]), "data.tg.t/D");
+    T->Branch("data.tg.p", &(eventdata.Data[kR_tr_tg_ph]), "data.tg.p/D");
 
     T->Branch("real.t", &(eventdata.Data[kRealTh]), "real.t/D");
     T->Branch("real.p", &(eventdata.Data[kRealPhi]), "real.p/D");
@@ -797,14 +797,14 @@ UInt_t LOpticsOpt::SaveDataBuffer(TTree * T)
     T->Branch("cal.t", &(eventdata.Data[kCalcTh]), "cal.t/D");
     T->Branch("cal.p", &(eventdata.Data[kCalcPh]), "cal.p/D");
 
-    T->Branch("data.tg.y", &(eventdata.Data[kL_tr_tg_y]), "data.tg.y/D");
+    T->Branch("data.tg.y", &(eventdata.Data[kR_tr_tg_y]), "data.tg.y/D");
     T->Branch("real.l_y", &(eventdata.Data[kRealTgY]), "real.l_y/D");
     T->Branch("real.l_z", &(eventdata.Data[kRealReactZ]), "real.l_z/D");
     T->Branch("cal.y", &(eventdata.Data[kCalcTgY]), "cal.y/D");
     T->Branch("cal.l_z", &(eventdata.Data[kCalcReactZ]), "cal.l_z/D");
 
-    T->Branch("data.tg.dp", &(eventdata.Data[kL_tr_tg_dp]), "data.tg.dp/D");
-    T->Branch("data.tg.p", &(eventdata.Data[kL_tr_p]), "data.tg.p/D");
+    T->Branch("data.tg.dp", &(eventdata.Data[kR_tr_tg_dp]), "data.tg.dp/D");
+    T->Branch("data.tg.p", &(eventdata.Data[kR_tr_p]), "data.tg.p/D");
     T->Branch("data.e", &(eventdata.Data[kurb_e]), "data.e/D");
     T->Branch("data.evtnum", &(eventdata.Data[kRunNum]), "data.evtnum/D");
     T->Branch("cal.flag", &(eventdata.Data[kExtraDataFlag]), "cal.flag/D");
@@ -831,7 +831,7 @@ UInt_t LOpticsOpt::SaveDataBuffer(TTree * T)
     return idx;
 }
 
-UInt_t LOpticsOpt::SaveDataBuffer(TString fname, TString tree)
+UInt_t ROpticsOpt::SaveDataBuffer(TString fname, TString tree)
 {
     // Save Rawdata[] to ROOT file
 
@@ -855,7 +855,7 @@ UInt_t LOpticsOpt::SaveDataBuffer(TString fname, TString tree)
 // Optimization related Commands
 ///////////////////////////////////////////////////////////////////////////////
 
-const TVector3 LOpticsOpt::GetSieveHoleTCS(UInt_t Col, UInt_t Row)
+const TVector3 ROpticsOpt::GetSieveHoleTCS(UInt_t Col, UInt_t Row)
 {
     assert(Col < NSieveCol);
     assert(Row < NSieveRow);
@@ -863,7 +863,7 @@ const TVector3 LOpticsOpt::GetSieveHoleTCS(UInt_t Col, UInt_t Row)
     return SieveHoleTCS;
 }
 
-void LOpticsOpt::PrepareSieve(void)
+void ROpticsOpt::PrepareSieve(void)
 {
     // Calculate kRealTh, kRealPhi
 
@@ -910,11 +910,11 @@ void LOpticsOpt::PrepareSieve(void)
         exttargcorr_th += x_tg * ExtTarCor_ThetaCorr;
         rms_exttargcorr_th += x_tg * ExtTarCor_ThetaCorr * x_tg * ExtTarCor_ThetaCorr;
 
-        DEBUG_MASSINFO("PrepareSieve", "%d,%d,%d: D_Th = %f,\t D_Phi = %f", FoilID, Col, Row, eventdata.Data[kRealThMatrix] - eventdata.Data[kL_tr_tg_th], eventdata.Data[kRealPhi] - eventdata.Data[kL_tr_tg_ph]);
-        DEBUG_MASSINFO("PrepareSieve", "%f,\t%f", eventdata.Data[kRealThMatrix], eventdata.Data[kL_tr_tg_th]);
+        DEBUG_MASSINFO("PrepareSieve", "%d,%d,%d: D_Th = %f,\t D_Phi = %f", FoilID, Col, Row, eventdata.Data[kRealThMatrix] - eventdata.Data[kR_tr_tg_th], eventdata.Data[kRealPhi] - eventdata.Data[kR_tr_tg_ph]);
+        DEBUG_MASSINFO("PrepareSieve", "%f,\t%f", eventdata.Data[kRealThMatrix], eventdata.Data[kR_tr_tg_th]);
 
-        dth += eventdata.Data[kRealThMatrix] - eventdata.Data[kL_tr_tg_th];
-        dphi += eventdata.Data[kRealPhi] - eventdata.Data[kL_tr_tg_ph];
+        dth += eventdata.Data[kRealThMatrix] - eventdata.Data[kR_tr_tg_th];
+        dphi += eventdata.Data[kRealPhi] - eventdata.Data[kR_tr_tg_ph];
     }
 
     DEBUG_INFO("PrepareSieve", "Average : D_Th = %f,\t D_Phi = %f", dth / fNRawData, dphi / fNRawData);
@@ -925,7 +925,7 @@ void LOpticsOpt::PrepareSieve(void)
     SumSquareDPhi();
 }
 
-void LOpticsOpt::PrepareSieveWithField(void)
+void ROpticsOpt::PrepareSieveWithField(void)
 {
     // Calculate kRealTh, kRealPhi
 
@@ -977,11 +977,11 @@ void LOpticsOpt::PrepareSieveWithField(void)
         exttargcorr_th += x_tg * ExtTarCor_ThetaCorr;
         rms_exttargcorr_th += x_tg * ExtTarCor_ThetaCorr * x_tg * ExtTarCor_ThetaCorr;
 
-        DEBUG_MASSINFO("PrepareSieve", "%d,%d,%d: D_Th = %f,\t D_Phi = %f", FoilID, Col, Row, eventdata.Data[kRealThMatrix] - eventdata.Data[kL_tr_tg_th], eventdata.Data[kRealPhi] - eventdata.Data[kL_tr_tg_ph]);
-        DEBUG_MASSINFO("PrepareSieve", "%f,\t%f", eventdata.Data[kRealThMatrix], eventdata.Data[kL_tr_tg_th]);
+        DEBUG_MASSINFO("PrepareSieve", "%d,%d,%d: D_Th = %f,\t D_Phi = %f", FoilID, Col, Row, eventdata.Data[kRealThMatrix] - eventdata.Data[kR_tr_tg_th], eventdata.Data[kRealPhi] - eventdata.Data[kR_tr_tg_ph]);
+        DEBUG_MASSINFO("PrepareSieve", "%f,\t%f", eventdata.Data[kRealThMatrix], eventdata.Data[kR_tr_tg_th]);
 
-        dth += eventdata.Data[kRealThMatrix] - eventdata.Data[kL_tr_tg_th];
-        dphi += eventdata.Data[kRealPhi] - eventdata.Data[kL_tr_tg_ph];
+        dth += eventdata.Data[kRealThMatrix] - eventdata.Data[kR_tr_tg_th];
+        dphi += eventdata.Data[kRealPhi] - eventdata.Data[kR_tr_tg_ph];
     }
 
     DEBUG_INFO("PrepareSieve", "Average : D_Th = %f,\t D_Phi = %f", dth / fNRawData, dphi / fNRawData);
@@ -992,7 +992,7 @@ void LOpticsOpt::PrepareSieveWithField(void)
     SumSquareDPhi();
 }
 
-Double_t LOpticsOpt::VerifyMatrix_Sieve(void)
+Double_t ROpticsOpt::VerifyMatrix_Sieve(void)
 {
     // Static summarize difference between tg_th, th_ph calculated from current database and those in root file
 
@@ -1020,11 +1020,11 @@ Double_t LOpticsOpt::VerifyMatrix_Sieve(void)
         phi = CalcTargetVar(fPMatrixElems, powers) + CalcTargetVar(fPTAMatrixElems, powers);
         // phi = CalcTargetVar(fPMatrixElems, powers);
 
-        dth += theta - eventdata.Data[kL_tr_tg_th];
-        rmsth += (theta - eventdata.Data[kL_tr_tg_th])*(theta - eventdata.Data[kL_tr_tg_th]);
+        dth += theta - eventdata.Data[kR_tr_tg_th];
+        rmsth += (theta - eventdata.Data[kR_tr_tg_th])*(theta - eventdata.Data[kR_tr_tg_th]);
 
-        dphi += phi - eventdata.Data[kL_tr_tg_ph];
-        rmsphi += (phi - eventdata.Data[kL_tr_tg_ph])*(phi - eventdata.Data[kL_tr_tg_ph]);
+        dphi += phi - eventdata.Data[kR_tr_tg_ph];
+        rmsphi += (phi - eventdata.Data[kR_tr_tg_ph])*(phi - eventdata.Data[kR_tr_tg_ph]);
     }
 
     DEBUG_INFO("VerifyMatrix_Sieve", "dth = %f, rmsth = %f", dth / fNRawData, TMath::Sqrt(rmsth / fNRawData));
@@ -1033,7 +1033,7 @@ Double_t LOpticsOpt::VerifyMatrix_Sieve(void)
     return TMath::Sqrt(rmsth / fNRawData + rmsphi / fNRawData);
 }
 
-TCanvas * LOpticsOpt::CheckSieve(Int_t PlotFoilID)
+TCanvas * ROpticsOpt::CheckSieve(Int_t PlotFoilID)
 {
     // Visualize Sieve Plane
     DEBUG_INFO("CheckSieve", "Entry Point");
@@ -1176,7 +1176,7 @@ TCanvas * LOpticsOpt::CheckSieve(Int_t PlotFoilID)
     return c1;
 }
 
-Double_t LOpticsOpt::SumSquareDTh(Bool_t PrintEachHole)
+Double_t ROpticsOpt::SumSquareDTh(Bool_t PrintEachHole)
 {
     // return square sum of diff between calculated tg_th and expected tg_th
 
@@ -1296,7 +1296,7 @@ Double_t LOpticsOpt::SumSquareDTh(Bool_t PrintEachHole)
     return rmsth;
 }
 
-Double_t LOpticsOpt::SumSquareDPhi(Bool_t PrintEachHole)
+Double_t ROpticsOpt::SumSquareDPhi(Bool_t PrintEachHole)
 {
     // return square sum of diff between calculated tg_ph and expected tg_ph
 
@@ -1413,7 +1413,7 @@ Double_t LOpticsOpt::SumSquareDPhi(Bool_t PrintEachHole)
     return rmsphi;
 }
 
-Double_t LOpticsOpt::SumSquareDBeamX(void)
+Double_t ROpticsOpt::SumSquareDBeamX(void)
 {
     //return standard deviation of projected beam_x
 
@@ -1474,7 +1474,7 @@ Double_t LOpticsOpt::SumSquareDBeamX(void)
     return rmsxlab;
 }
 
-Double_t LOpticsOpt::SumSquareDBeamY(void)
+Double_t ROpticsOpt::SumSquareDBeamY(void)
 {
     // return standard deviation of projected beam_y
 
@@ -1536,7 +1536,7 @@ Double_t LOpticsOpt::SumSquareDBeamY(void)
     return rmsylab;
 }
 
-void LOpticsOpt::PrepareTgY(void)
+void ROpticsOpt::PrepareTgY(void)
 {
     // calculate kRealTgY
 
@@ -1568,11 +1568,11 @@ void LOpticsOpt::PrepareTgY(void)
         eventdata.Data[kRealTgY] = Real_Tg_Y;
         eventdata.Data[kRealReactZ] = targetfoils[FoilID];
 
-        dtg_y += (eventdata.Data[kRealTgY] - eventdata.Data[kL_tr_tg_y]);
+        dtg_y += (eventdata.Data[kRealTgY] - eventdata.Data[kR_tr_tg_y]);
 
         // redundant checks
         // TVector3 Tg_YSpotTCS(0, Real_Tg_Y, 0);
-        // TVector3 PhiDirectionTCS(0, eventdata.Data[kL_tr_tg_ph], 1);
+        // TVector3 PhiDirectionTCS(0, eventdata.Data[kR_tr_tg_ph], 1);
 
         // TVector3 Tg_YSpotHCS = fTCSInHCS * Tg_YSpotTCS + fPointingOffset;
         // TVector3 PhiDirectionHCS = fTCSInHCS * PhiDirectionTCS;
@@ -1583,8 +1583,8 @@ void LOpticsOpt::PrepareTgY(void)
         // Double_t reactz = Tg_YSpotHCS.Z()-(Tg_YSpotHCS.X() - eventdata.Data[kBeamX]) / PhiDirectionHCS.X() * PhiDirectionHCS.Z();
 
         // DEBUG_MASSINFO("PrepareVertex", "reactz =%f, eventdata.Data[kRealReactZ]=%f", reactz, eventdata.Data[kRealReactZ]);
-        // DEBUG_MASSINFO("PrepareVertex", "Real_Tg_Y =%f, eventdata.Data[kRealReactZ]=%f, targetfoils[FoilID]=%f", Real_Tg_Y, eventdata.Data[kL_tr_tg_ph], targetfoils[FoilID]);
-        DEBUG_MASSINFO("PrepareTgY", "dtg_y = %f", eventdata.Data[kRealTgY] - eventdata.Data[kL_tr_tg_y]);
+        // DEBUG_MASSINFO("PrepareVertex", "Real_Tg_Y =%f, eventdata.Data[kRealReactZ]=%f, targetfoils[FoilID]=%f", Real_Tg_Y, eventdata.Data[kR_tr_tg_ph], targetfoils[FoilID]);
+        DEBUG_MASSINFO("PrepareTgY", "dtg_y = %f", eventdata.Data[kRealTgY] - eventdata.Data[kR_tr_tg_y]);
         // assert(TMath::Abs(reactz - eventdata.Data[kRealReactZ]) < 1e-4); //check internal calculation consistency
     }
 
@@ -1594,7 +1594,7 @@ void LOpticsOpt::PrepareTgY(void)
     SumSquareDTgY();
 }
 
-Double_t LOpticsOpt::VerifyMatrix_TgY(void)
+Double_t ROpticsOpt::VerifyMatrix_TgY(void)
 {
     // static summarize difference between tg_y calculated from current database and those in root file
 
@@ -1620,10 +1620,10 @@ Double_t LOpticsOpt::VerifyMatrix_TgY(void)
         // calculate the coordinates at the target
         y = CalcTargetVar(fYMatrixElems, powers) + CalcTargetVar(fYTAMatrixElems, powers);
 
-        dtg_y += y - eventdata.Data[kL_tr_tg_y];
-        dtg_y_rms += (y - eventdata.Data[kL_tr_tg_y])*(y - eventdata.Data[kL_tr_tg_y]);
+        dtg_y += y - eventdata.Data[kR_tr_tg_y];
+        dtg_y_rms += (y - eventdata.Data[kR_tr_tg_y])*(y - eventdata.Data[kR_tr_tg_y]);
 
-        DEBUG_MASSINFO("VerifyMatrix_TgY", "y = %f, eventdata.Data[kL_tr_tg_y] = %f", y, eventdata.Data[kL_tr_tg_y]);
+        DEBUG_MASSINFO("VerifyMatrix_TgY", "y = %f, eventdata.Data[kR_tr_tg_y] = %f", y, eventdata.Data[kR_tr_tg_y]);
     }
 
     DEBUG_INFO("VerifyMatrix_Vertex", "dtg_y = %f, dtg_y_rms = %f", dtg_y / fNRawData, TMath::Sqrt(dtg_y_rms / fNRawData));
@@ -1631,7 +1631,7 @@ Double_t LOpticsOpt::VerifyMatrix_TgY(void)
     return TMath::Sqrt(dtg_y_rms / fNRawData);
 }
 
-TCanvas * LOpticsOpt::CheckTgY()
+TCanvas * ROpticsOpt::CheckTgY()
 {
     // Visualize TgY spectrum
 
@@ -1718,7 +1718,7 @@ TCanvas * LOpticsOpt::CheckTgY()
     return c1;
 }
 
-Double_t LOpticsOpt::SumSquareDTgY(void)
+Double_t ROpticsOpt::SumSquareDTgY(void)
 {
     // return square sum of diff between calculated tg_y and expected tg_y
 
@@ -1764,7 +1764,7 @@ Double_t LOpticsOpt::SumSquareDTgY(void)
     return dtg_y_rms;
 }
 
-Double_t LOpticsOpt::SumSquareDTgYAverFoils(void)
+Double_t ROpticsOpt::SumSquareDTgYAverFoils(void)
 {
     // return square sum of diff between calculated tg_y and expected tg_y
     // Statistical Weight on each foil is same
@@ -1830,7 +1830,7 @@ Double_t LOpticsOpt::SumSquareDTgYAverFoils(void)
     return dtg_y_rms_foilaver;
 }
 
-void LOpticsOpt::PrepareDp(void)
+void ROpticsOpt::PrepareDp(void)
 {
     // calate expected dp_kin, dp_kin offsets ....
     // Fill up fRawData[].Data[] kKineID thr kRealDpKin
@@ -1882,8 +1882,8 @@ void LOpticsOpt::PrepareDp(void)
         if (!ExtraDataFlag) fNCalibData++;
         eventdata.Data[kKineID] = KineID;
         eventdata.Data[kCentralp] = HRSCentralMom[KineID];
-        const Double_t EPICS_P = eventdata.Data[kL_tr_p] / (1. + eventdata.Data[kL_tr_tg_dp]);
-        DEBUG_MASSINFO("PrepareDp", "Central_P/GeV: EPICS=%f (%f, %f), NMR=%f", EPICS_P, eventdata.Data[kL_tr_p], eventdata.Data[kL_tr_tg_dp], eventdata.Data[kCentralp]);
+        const Double_t EPICS_P = eventdata.Data[kR_tr_p] / (1. + eventdata.Data[kR_tr_tg_dp]);
+        DEBUG_MASSINFO("PrepareDp", "Central_P/GeV: EPICS=%f (%f, %f), NMR=%f", EPICS_P, eventdata.Data[kR_tr_p], eventdata.Data[kR_tr_tg_dp], eventdata.Data[kCentralp]);
         assert(TMath::Abs(EPICS_P - eventdata.Data[kCentralp]) < 5e-1); // WARNING: Change to 1e-3 for normal replays
 
         const TVector3 SieveHoleTCS = GetSieveHoleTCS(Col, Row);
@@ -1902,13 +1902,13 @@ void LOpticsOpt::PrepareDp(void)
         eventdata.Data[kRealTgX] = x_tg;
         eventdata.Data[kRealThMatrix] = eventdata.Data[kRealTh] - x_tg * ExtTarCor_ThetaCorr;
 
-        DEBUG_MASSINFO("PrepareDp", "%d,%d,%d: D_Th = %f,\t D_Phi = %f", FoilID, Col, Row, eventdata.Data[kRealThMatrix] - eventdata.Data[kL_tr_tg_th], eventdata.Data[kRealPhi] - eventdata.Data[kL_tr_tg_ph]);
-        DEBUG_MASSINFO("PrepareDp", "RealTh=%f,\tL_tr_tg_th=%f", eventdata.Data[kRealThMatrix], eventdata.Data[kL_tr_tg_th]);
-        DEBUG_MASSINFO("PrepareDp", "RealPh=%f,\tkL_tr_tg_ph=%f", eventdata.Data[kRealPhi], eventdata.Data[kL_tr_tg_ph]);
+        DEBUG_MASSINFO("PrepareDp", "%d,%d,%d: D_Th = %f,\t D_Phi = %f", FoilID, Col, Row, eventdata.Data[kRealThMatrix] - eventdata.Data[kR_tr_tg_th], eventdata.Data[kRealPhi] - eventdata.Data[kR_tr_tg_ph]);
+        DEBUG_MASSINFO("PrepareDp", "RealTh=%f,\tL_tr_tg_th=%f", eventdata.Data[kRealThMatrix], eventdata.Data[kR_tr_tg_th]);
+        DEBUG_MASSINFO("PrepareDp", "RealPh=%f,\tkR_tr_tg_ph=%f", eventdata.Data[kRealPhi], eventdata.Data[kR_tr_tg_ph]);
         DEBUG_MASSINFO("PrepareDp", "SieveHoleY=%f,\tMom.Y=%f,\tMom.Z=%f", SieveHoleTCS.y(), MomDirectionTCS.Y(), MomDirectionTCS.Z());
 
-        dth += eventdata.Data[kRealThMatrix] - eventdata.Data[kL_tr_tg_th];
-        dphi += eventdata.Data[kRealPhi] - eventdata.Data[kL_tr_tg_ph];
+        dth += eventdata.Data[kRealThMatrix] - eventdata.Data[kR_tr_tg_th];
+        dphi += eventdata.Data[kRealPhi] - eventdata.Data[kR_tr_tg_ph];
 
         TVector3 MomDirectionHCS = fTCSInHCS*MomDirectionTCS;
         TVector3 BeamDirection(0, 0, 1);
@@ -1978,7 +1978,7 @@ void LOpticsOpt::PrepareDp(void)
     SumSquareDp();
 }
 
-Double_t LOpticsOpt::VerifyMatrix_Dp(void)
+Double_t ROpticsOpt::VerifyMatrix_Dp(void)
 {
     // static summarize difference between tg_dp calculated from current database and those in root file
 
@@ -2008,8 +2008,8 @@ Double_t LOpticsOpt::VerifyMatrix_Dp(void)
         dp = CalcTargetVar(fDMatrixElems, powers);
         dp_kin = dp - eventdata.Data[kDpKinOffsets];
 
-        d_dp += dp - eventdata.Data[kL_tr_tg_dp];
-        rms_dp += (dp - eventdata.Data[kL_tr_tg_dp])*(dp - eventdata.Data[kL_tr_tg_dp]);
+        d_dp += dp - eventdata.Data[kR_tr_tg_dp];
+        rms_dp += (dp - eventdata.Data[kR_tr_tg_dp])*(dp - eventdata.Data[kR_tr_tg_dp]);
 
         DEBUG_MASSINFO("SumSquareDp", "d_dp = %f = \t%f - \t%f", dp_kin - eventdata.Data[kRealDpKin], dp_kin, eventdata.Data[kRealDpKin]);
     }
@@ -2019,7 +2019,7 @@ Double_t LOpticsOpt::VerifyMatrix_Dp(void)
     return TMath::Sqrt(rms_dp / fNRawData);
 }
 
-TCanvas * LOpticsOpt::CheckDp()
+TCanvas * ROpticsOpt::CheckDp()
 {
     // Visualize 1D hitogram of dp_kin
 
@@ -2151,7 +2151,7 @@ TCanvas * LOpticsOpt::CheckDp()
     return c1;
 }
 
-TCanvas * LOpticsOpt::CheckDpGlobal()
+TCanvas * ROpticsOpt::CheckDpGlobal()
 {
     // Visualize 1D hitogram of dp_kin
 
@@ -2248,7 +2248,7 @@ TCanvas * LOpticsOpt::CheckDpGlobal()
     return c1;
 }
 
-Double_t LOpticsOpt::SumSquareDp(Bool_t IncludeExtraData)
+Double_t ROpticsOpt::SumSquareDp(Bool_t IncludeExtraData)
 {
     // return square sum of diff between calculated dp_kin and expected dp_kin
 
@@ -2314,7 +2314,7 @@ Double_t LOpticsOpt::SumSquareDp(Bool_t IncludeExtraData)
 // declarations for target vertex reconstruction
 ///////////////////////////////////////////////////////////////////////////////
 
-void LOpticsOpt::CalcMatrix(const Double_t x, vector<THaMatrixElement>& matrix)
+void ROpticsOpt::CalcMatrix(const Double_t x, vector<THaMatrixElement>& matrix)
 {
     // calculates the values of the matrix elements for a given location
     // by evaluating a polynomial in x of order it->order with
@@ -2332,7 +2332,7 @@ void LOpticsOpt::CalcMatrix(const Double_t x, vector<THaMatrixElement>& matrix)
     }
 }
 
-Double_t LOpticsOpt::CalcTargetVar(const vector<THaMatrixElement>& matrix, const Double_t powers[][5])
+Double_t ROpticsOpt::CalcTargetVar(const vector<THaMatrixElement>& matrix, const Double_t powers[][5])
 {
     // calculates the value of a variable at the target
     // the x-dependence is already in the matrix, so only 1-3 (or np) used
@@ -2385,4 +2385,4 @@ void THaMatrixElement::SkimPoly()
     if (order == 0) iszero = kTRUE;
 }
 
-ClassImp(LOpticsOpt);
+ClassImp(ROpticsOpt);
