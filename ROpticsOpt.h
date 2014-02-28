@@ -6,12 +6,12 @@
 // Based on THaVDC
 //
 // Units used:
-//        For X, Y, and Z coordinates of track    -  meters
-//        For Theta and Phi angles of track       -  tan(angle)
-//        For Momentums, Masses                   -  GeV, GeV/c^2
+//   For X, Y, and Z coordinates of track    -  meters
+//   For Theta and Phi angles of track       -  tan(angle)
+//   For Momentums, Masses                   -  GeV, GeV/c^2
 //
 // Author: Jin Huang <jinhuang@jlab.org>
-//         Chao Gu <cg2ja@jlab.org>
+//
 // Modification:
 //   Jun 25, 2010 Updated for APEX optics calibration
 //   Aug 01, 2013 Updated for G2P optics calibration (Chao Gu)
@@ -29,12 +29,10 @@
 #include "THaTrackingDetector.h"
 #include "THaString.h"
 
-//------------------------------------------------------//
-//
-//      Debug Definitions
-//      place this section below any other head files
-//
-//------------------------------------------------------//
+///////////////////////////////////////////////////////////////////////////////
+// Debug Definitions
+// place this section below any other head files
+///////////////////////////////////////////////////////////////////////////////
 #ifdef DEBUG_LEVEL
 #undef DEBUG_LEVEL
 #endif
@@ -44,11 +42,11 @@
 //     >=2     above + enable debug assert
 //     >=3     above + enable debug extra info
 //     >=4     above + massive info (in a for or while)
-//     >=5 Decode dump
+//     >=5     Decode dump
 #define DEBUG_LEVEL 3
 #include "DebugDef.h"
-//------------------------------------------------------//
 
+///////////////////////////////////////////////////////////////////////////////
 class TCanvas;
 class THaTrack;
 class TClonesArray;
@@ -66,12 +64,12 @@ public:
     // Database input/output
     ///////////////////////////////////////////////////////////////////////////
     TString OldComments;
-    Int_t LoadDataBase(TString DataBaseName); //Database file -> Memory
-    Int_t SaveDataBase(TString DataBaseName); //Memory -> Database file
+    Int_t LoadDataBase(TString DataBaseName); // Database file -> Memory
+    Int_t SaveDataBase(TString DataBaseName); // Memory -> Database file
 
     virtual void Print(const Option_t* opt) const;
 
-    UInt_t Matrix2Array(Double_t Array[], Bool_t FreeParaFlag[] = NULL) //fCurrentMatrixElems -> Array
+    UInt_t Matrix2Array(Double_t Array[], Bool_t FreeParaFlag[] = NULL) // fCurrentMatrixElems -> Array
     {
         assert(fCurrentMatrixElems);
         return Matrix2Array(Array, (*fCurrentMatrixElems), FreeParaFlag);
@@ -88,41 +86,45 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     // Data storage
     ///////////////////////////////////////////////////////////////////////////
-    UInt_t LoadRawData(TString DataFileName, UInt_t NLoad = MaxNRawData, UInt_t MaxDataPerGroup = (UInt_t) - 1); //load data to Rawdata[]
-    UInt_t SaveDataBuffer(TTree * T); //save Rawdata[] to T Tree. return N event written
-    UInt_t SaveDataBuffer(TString fname, TString tree = "T"); //save Rawdata[] to file
+    UInt_t LoadRawData(TString DataFileName, UInt_t NLoad = MaxNRawData, UInt_t MaxDataPerGroup = (UInt_t) - 1); // load data to Rawdata[]
 
     enum {
         MaxNEventData = 50, MaxNRawData = 2000000, kNUM_PRECOMP_POW = 10, kMaxDataGroup = 180 * 5 * 5
     };
 
     typedef struct {
-        Double_t Data[MaxNEventData]; //[CommonIdx]
+        Double_t Data[MaxNEventData]; // [CommonIdx]
         Double_t powers[kNUM_PRECOMP_POW][5]; // {(x), th, y, ph, abs(th) }
     } EventData;
-    EventData fRawData[MaxNRawData]; //[fNRawData]
+    EventData fRawData[MaxNRawData]; // [fNRawData]
     UInt_t fNRawData;
     UInt_t fNCalibData; // for dp calib only
 
     enum CommonIdx {
-        kCutID = 0, //cut ID in order of tree2asc cut file
-        kX = 1, //R.tr.r_x
-        kTh = 2, //R.tr.r_th
-        kY = 3, //R.tr.r_y
-        kPhi = 4, //R.tr.r_ph
-        kBeamX = 5, //urb.x or rb.x
-        kBeamY = 6, //urb.y or rb.y
-        kR_tr_tg_th = 7, //R.tr.tg_th
-        kR_tr_tg_ph = 8 //R.tr.tg_ph
+        kCutID = 0, // cut ID in order of tree2ascii cut file
+        kX = 1, // L.tr.r_x
+        kTh = 2, // L.tr.r_th
+        kY = 3, // L.tr.r_y
+        kPhi = 4, // L.tr.r_ph
+        kurb_e = 5, // Beam energy
+        kBeamX = 6, // urb.x or rb.x
+        kBeamY = 7, // urb.y or rb.y
+        kSimX = 8,
+        kSimTh = 9,
+        kSimY = 10,
+        kSimPh = 11,
+        kOrinTh = 12,
+        kOrinPh = 13
     };
 
     enum ExtraSieveIdx {
-        kRealTh = 30, //real target th from survey
-        kRealPhi, //real target ph from survey
-        kRealTgX, //real target x from survey, beam
-        kRealThMatrix, //expected target th before extended target corrections
-        kCalcTh, //calculated th from matrix
-        kCalcPh, //calculated ph from matrix
+        kRealTh = 30, // real target th from survey
+        kRealPhi, // real target ph from survey
+        kRealTgX, // real target x from survey, beam
+        kRealTgY, // real target y from survey, beam
+        kRealThMatrix, // expected target th before extended target corrections
+        kCalcTh, // calculated th from matrix
+        kCalcPh, // calculated ph from matrix
         kSieveX,
         kSieveY,
         kSieveZ,
@@ -130,19 +132,13 @@ public:
     };
 
     enum ExtraVertexIdx {
-        kR_tr_tg_y = 9, //R.tr.tg_y
-        kRealTgY, //Expected Tg_y from Survey and
-        kRealReactZ, //expected ReactZ
+        kRealReactZ = 14, //expected ReactZ
         kCalcTgY, //calculated Tg_y
         kCalcReactZ //calculated ReactZ
     };
 
     enum ExtraDpIdx {
-        kR_tr_tg_dp = 9, //R.tr.tg_dp
-        kR_tr_p, //R.tr.p
-        kurb_e, //Beam energy
-        kRunNum, //Run number
-        kExtraDataFlag, //Whether this event is for optimization; 0=used for optimization, 1=for plotting only
+        kExtraDataFlag = 14, //Whether this event is for optimization; 0=used for optimization, 1=for plotting only
         kKineID, //Delta Scan Kinematics ID
         kCentralp, //Central Momentum
         kRadiLossDp, //Radiation Loss for this event in unit of dp
@@ -162,29 +158,27 @@ public:
 
     void PrepareSieve(void);
     void PrepareSieveWithField(void);
-    Double_t VerifyMatrix_Sieve(void);
     TCanvas* CheckSieve(Int_t PlotFoilID = 0);
-    Double_t SumSquareDTh(Bool_t PrintEachHole = kFALSE);
-    Double_t SumSquareDPhi(Bool_t PrintEachHole = kFALSE);
+    Double_t SumSquareDTh(void);
+    Double_t SumSquareDPhi(void);
     Double_t SumSquareDBeamX(void);
     Double_t SumSquareDBeamY(void);
 
-    Double_t fArbitaryVertexShift[100]; //compensate bias due to event selections, array of [FoilID]
+    Double_t fArbitaryVertexShift[100]; // compensate bias due to event selections, array of [FoilID]
     void PrepareTgY(void);
-    Double_t VerifyMatrix_TgY(void);
+    void PrepareTgYWithField(void);
     TCanvas* CheckTgY(void);
     Double_t SumSquareDTgY();
-    Double_t SumSquareDTgYAverFoils();
 
-    Double_t fArbitaryDpKinShift[100]; //compensate bias due to dp event selections, array of [KineID]
+    Double_t fArbitaryDpKinShift[100]; // compensate bias due to dp event selections, array of [KineID]
     void PrepareDp(void);
-    Double_t VerifyMatrix_Dp(void);
+    void PrepareDpWithField(void);
     TCanvas* CheckDp(void);
     TCanvas* CheckDpGlobal(void);
     Double_t SumSquareDp(Bool_t IncludeExtraData = kFALSE);
 
-    TRotation fTCSInHCS; //transformations vector from TCS to HCS
-    TVector3 fPointingOffset; //Optical point in lab coordinate system
+    TRotation fTCSInHCS; // transformations vector from TCS to HCS
+    TVector3 fPointingOffset; // Optical point in lab coordinate system
 
     inline Double_t ScatMom(Double_t DM, Double_t Ma, Double_t P0, Double_t Theta)
     {
@@ -220,8 +214,6 @@ public:
     std::vector<THaMatrixElement> fYMatrixElems;
     std::vector<THaMatrixElement> fYTAMatrixElems; // involves abs(theta_fp)
     std::vector<THaMatrixElement> fFPMatrixElems; // matrix elements used in
-    // focal plane transformations
-    // { T, Y, P }
 
     std::vector<THaMatrixElement> fLMatrixElems; // Path-length corrections (meters)
 

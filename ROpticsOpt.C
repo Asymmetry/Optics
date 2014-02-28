@@ -6,9 +6,9 @@
 // Based on THaVDC
 //
 // Units used:
-//        For X, Y, and Z coordinates of track    -  meters
-//        For Theta and Phi angles of track       -  tan(angle)
-//        For Momentums, Masses                   -  GeV, GeV/c^2
+//   For X, Y, and Z coordinates of track    -  meters
+//   For Theta and Phi angles of track       -  tan(angle)
+//   For Momentums, Masses                   -  GeV, GeV/c^2
 //
 // Author: Jin Huang <jinhuang@jlab.org>
 //
@@ -285,30 +285,6 @@ Int_t ROpticsOpt::LoadDataBase(TString DataBaseName)
             Warning(Here(here), "Not storing matrix for: %s !", w);
     }
 
-    //    // Compute derived quantities and set some hardcoded parameters
-    //    const Double_t degrad = TMath::Pi() / 180.0;
-    //    fTan_vdc = fFPMatrixElems[T000].poly[0];
-    //    fVDCAngle = TMath::ATan(fTan_vdc);
-    //    fSin_vdc = TMath::Sin(fVDCAngle);
-    //    fCos_vdc = TMath::Cos(fVDCAngle);
-    //
-    //    // Define the VDC coordinate axes in the "detector system". By definition,
-    //    // the detector system is identical to the VDC origin in the Hall A HRS.
-    //    DefineAxes(0.0 * degrad);
-    //
-    //    fNumIter = 1; // Number of iterations for FineTrack()
-    //    fErrorCutoff = 1e100;
-    //
-    //    // figure out the track length from the origin to the s1 plane
-    //
-    //    // since we take the VDC to be the origin of the coordinate
-    //    // space, this is actually pretty simple
-    //    const THaDetector* s1 = GetApparatus()->GetDetector("s1");
-    //    if (s1 == NULL)
-    //        fCentralDist = 0;
-    //    else
-    //        fCentralDist = s1->GetOrigin().Z();
-
     CalcMatrix(1., fLMatrixElems); // tensor without explicit polynomial in x_fp
 
     fIsInit = true;
@@ -338,27 +314,6 @@ Int_t ROpticsOpt::SaveDataBase(TString DataBaseName)
     fprintf(file, "# Saved to %s", DataBaseName.Data());
     fprintf(file, "\n");
     fprintf(file, OldComments);
-
-    // Header Part
-    // 	[ L.global ]
-    // 	0.3327 1 0.0 270.2 0.0 -1.6e-03        VDC Angle, Plane Spacing, Gamma Coefficents
-    // 	matrix elements
-    // 	t 0 0 0  -1.001135e+00 -3.313373e-01 -4.290819e-02  4.470852e-03  0.000000e+00  0.000000e+00  0.000000e+00  0
-    // 	y 0 0 0  -8.060915e-03  1.071977e-03  9.019102e-04 -3.239615e-04  0.000000e+00  0.000000e+00  0.000000e+00  0
-    //  p 0 0 0  -2.861912e-03 -2.469069e-03  8.427172e-03  2.274635e-03  0.000000e+00  0.000000e+00  0.000000e+00  0
-
-    //    fprintf(file, "[ L.global ]");
-    //    fprintf(file, "\n");
-    //    fprintf(file, "0.3327 1 0.0 270.2 0.0 -1.6e-03        VDC Angle, Plane Spacing, Gamma Coefficents");
-    //    fprintf(file, "\n");
-    //    fprintf(file, "matrix elements");
-    //    fprintf(file, "\n");
-    //    fprintf(file, "t 0 0 0  -1.001135e+00 -3.313373e-01 -4.290819e-02  4.470852e-03  0.000000e+00  0.000000e+00  0.000000e+00  0");
-    //    fprintf(file, "\n");
-    //    fprintf(file, "y 0 0 0  -8.060915e-03  1.071977e-03  9.019102e-04 -3.239615e-04  0.000000e+00  0.000000e+00  0.000000e+00  0");
-    //    fprintf(file, "\n");
-    //    fprintf(file, "p 0 0 0  -2.861912e-03 -2.469069e-03  8.427172e-03  2.274635e-03  0.000000e+00  0.000000e+00  0.000000e+00  0");
-    //    fprintf(file, "\n");
 
     fprintf(file, DatabaseHeader);
 
@@ -433,46 +388,6 @@ Int_t ROpticsOpt::SaveDataBase(TString DataBaseName)
         fprintf(file, "  %d", m.OptOrder);
         fprintf(file, "\n");
     }
-
-    // L and XF Matrix
-    //    fprintf(file, "L 0 0 0 0  25.713");
-    //    fprintf(file, "\n");
-    //    fprintf(file, "L 1 0 0 0  0.1650 ");
-    //    fprintf(file, "\n");
-    //    fprintf(file, "L 2 0 0 0 -0.05");
-    //    fprintf(file, "\n");
-    //    fprintf(file, "L 0 1 0 0 -11.6554");
-    //    fprintf(file, "\n");
-    //    fprintf(file, "L 0 2 0 0 -9.4951");
-    //    fprintf(file, "\n");
-    //    fprintf(file, "L 0 0 1 0  0.0");
-    //    fprintf(file, "\n");
-    //    fprintf(file, "L 0 0 2 0  0.0");
-    //    fprintf(file, "\n");
-    //    fprintf(file, "L 0 0 0 1  0.0");
-    //    fprintf(file, "\n");
-    //    fprintf(file, "L 0 0 0 2  0.0");
-    //    fprintf(file, "\n");
-    //    fprintf(file, "XF 1 0 0 0 0 -2.181E+00");
-    //    fprintf(file, "\n");
-    //    fprintf(file, "XF 0 1 0 0 0 -1.980E-01");
-    //    fprintf(file, "\n");
-    //    fprintf(file, "XF 0 0 0 0 1  1.191E+01");
-    //    fprintf(file, "\n");
-    //    fprintf(file, "TF 1 0 0 0 0 -1.000E-01");
-    //    fprintf(file, "\n");
-    //    fprintf(file, "TF 0 1 0 0 0 -4.690E-01");
-    //    fprintf(file, "\n");
-    //    fprintf(file, "TF 0 0 0 0 1  1.967E+00");
-    //    fprintf(file, "\n");
-    //    fprintf(file, "PF 0 0 1 0 0  3.630E-01");
-    //    fprintf(file, "\n");
-    //    fprintf(file, "PF 0 0 0 1 0 -0.902E+00");
-    //    fprintf(file, "\n");
-    //    fprintf(file, "YF 0 0 1 0 0 -5.950E-01");
-    //    fprintf(file, "\n");
-    //    fprintf(file, "YF 0 0 0 1 0 -1.274E+00");
-    //    fprintf(file, "\n");
 
     fprintf(file, DatabaseFooter);
 
@@ -770,87 +685,6 @@ UInt_t ROpticsOpt::LoadRawData(TString DataFileName, UInt_t NLoad, UInt_t MaxDat
     return NRead;
 }
 
-UInt_t ROpticsOpt::SaveDataBuffer(TTree * T)
-{
-    // Save Rawdata[] to T Tree. return N event written
-
-    assert(T);
-
-    DEBUG_INFO("SaveDataBuffer", "Saving Data buffer to Tree %s ... ", T->GetName());
-
-    EventData eventdata;
-
-    T->Branch("id", &(eventdata.Data[kCutID]), "id/D");
-    T->Branch("data.fp.r_x", &(eventdata.Data[kX]), "data.fp.r_x/D");
-    T->Branch("data.fp.r_t", &(eventdata.Data[kTh]), "data.fp.r_t/D");
-    T->Branch("data.fp.r_y", &(eventdata.Data[kY]), "data.fp.r_y/D");
-    T->Branch("data.fp.r_p", &(eventdata.Data[kPhi]), "data.fp.r_p/D");
-    T->Branch("data.bpm.l_x", &(eventdata.Data[kBeamX]), "data.bpm.l_x/D");
-    T->Branch("data.bpm.l_y", &(eventdata.Data[kBeamY]), "data.bpm.l_y/D");
-    T->Branch("data.tg.t", &(eventdata.Data[kR_tr_tg_th]), "data.tg.t/D");
-    T->Branch("data.tg.p", &(eventdata.Data[kR_tr_tg_ph]), "data.tg.p/D");
-
-    T->Branch("real.t", &(eventdata.Data[kRealTh]), "real.t/D");
-    T->Branch("real.p", &(eventdata.Data[kRealPhi]), "real.p/D");
-    T->Branch("real.l_x", &(eventdata.Data[kRealTgX]), "real.l_x/D");
-    T->Branch("real.tm", &(eventdata.Data[kRealThMatrix]), "real.tm/D");
-    T->Branch("cal.t", &(eventdata.Data[kCalcTh]), "cal.t/D");
-    T->Branch("cal.p", &(eventdata.Data[kCalcPh]), "cal.p/D");
-
-    T->Branch("data.tg.y", &(eventdata.Data[kR_tr_tg_y]), "data.tg.y/D");
-    T->Branch("real.l_y", &(eventdata.Data[kRealTgY]), "real.l_y/D");
-    T->Branch("real.l_z", &(eventdata.Data[kRealReactZ]), "real.l_z/D");
-    T->Branch("cal.y", &(eventdata.Data[kCalcTgY]), "cal.y/D");
-    T->Branch("cal.l_z", &(eventdata.Data[kCalcReactZ]), "cal.l_z/D");
-
-    T->Branch("data.tg.dp", &(eventdata.Data[kR_tr_tg_dp]), "data.tg.dp/D");
-    T->Branch("data.tg.p", &(eventdata.Data[kR_tr_p]), "data.tg.p/D");
-    T->Branch("data.e", &(eventdata.Data[kurb_e]), "data.e/D");
-    T->Branch("data.evtnum", &(eventdata.Data[kRunNum]), "data.evtnum/D");
-    T->Branch("cal.flag", &(eventdata.Data[kExtraDataFlag]), "cal.flag/D");
-    T->Branch("real.kinid", &(eventdata.Data[kKineID]), "real.kinid/D");
-    T->Branch("real.certralp", &(eventdata.Data[kCentralp]), "real.centralp/D");
-    T->Branch("real.radilossdp", &(eventdata.Data[kRadiLossDp]), "real.radilossdp/D");
-    T->Branch("real.scatterangle", &(eventdata.Data[kScatterAngle]), "real.scatterangle/D");
-    T->Branch("real.dpkinoffsets", &(eventdata.Data[kDpKinOffsets]), "real.dpkinoffsets/D");
-    T->Branch("real.dpkin", &(eventdata.Data[kRealDpKin]), "real.dpkin/D");
-    T->Branch("real.dpkinm", &(eventdata.Data[kRealDpKinMatrix]), "real.dpkinm/D");
-    T->Branch("cal.dpkinm", &(eventdata.Data[kCalcDpKinMatrix]), "cal.dpKinm/D");
-    T->Branch("cal.dpkin", &(eventdata.Data[kCalcDpKin]), "cal.dpkin/D");
-    T->Branch("real.dpkinexcitations", &(eventdata.Data[kRealDpKinExcitations]), "real.dpkinexcitations/D");
-
-    UInt_t idx = 0;
-    for (idx = 0; idx < fNRawData; idx++) {
-        eventdata = fRawData[idx];
-        T->Fill();
-    }
-
-    T -> Write();
-
-    DEBUG_INFO("SaveDataBuffer", "Done : Saving Data buffer to Tree");
-    return idx;
-}
-
-UInt_t ROpticsOpt::SaveDataBuffer(TString fname, TString tree)
-{
-    // Save Rawdata[] to ROOT file
-
-    DEBUG_INFO("SaveDataBuffer", "Saving Data buffer to File %s", fname.Data());
-
-    TFile *f = new TFile(fname, "recreate");
-    assert(f);
-    f->cd();
-
-    TTree *T = new TTree(tree.Data(), "Data buffer of HRS Optics Optimizer");
-    assert(T);
-    UInt_t cnt = SaveDataBuffer(T);
-
-    f->cd();
-    f->Write();
-
-    return cnt;
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 // Optimization related Commands
 ///////////////////////////////////////////////////////////////////////////////
@@ -869,7 +703,6 @@ void ROpticsOpt::PrepareSieve(void)
 
     // DEBUG_INFO("PrepareSieve","Entry Point");
 
-    Double_t dth = 0, dphi = 0;
     Double_t exttargcorr_th = 0, rms_exttargcorr_th = 0;
 
     for (UInt_t idx = 0; idx < fNRawData; idx++) {
@@ -900,7 +733,9 @@ void ROpticsOpt::PrepareSieve(void)
         eventdata.Data[kRealPhi] = MomDirectionTCS.Y() / MomDirectionTCS.Z();
 
         const Double_t x_tg = BeamSpotTCS.X() - BeamSpotTCS.Z() * eventdata.Data[kRealTh];
+        const Double_t y_tg = BeamSpotTCS.Y() - BeamSpotTCS.Z() * eventdata.Data[kRealPhi];
         eventdata.Data[kRealTgX] = x_tg;
+        eventdata.Data[kRealTgY] = y_tg;
 
         // Expected th ph before ext. target correction
         // fDeltaTh = fThetaCorr * x_tg;
@@ -910,19 +745,16 @@ void ROpticsOpt::PrepareSieve(void)
         exttargcorr_th += x_tg * ExtTarCor_ThetaCorr;
         rms_exttargcorr_th += x_tg * ExtTarCor_ThetaCorr * x_tg * ExtTarCor_ThetaCorr;
 
-        DEBUG_MASSINFO("PrepareSieve", "%d,%d,%d: D_Th = %f,\t D_Phi = %f", FoilID, Col, Row, eventdata.Data[kRealThMatrix] - eventdata.Data[kR_tr_tg_th], eventdata.Data[kRealPhi] - eventdata.Data[kR_tr_tg_ph]);
-        DEBUG_MASSINFO("PrepareSieve", "%f,\t%f", eventdata.Data[kRealThMatrix], eventdata.Data[kR_tr_tg_th]);
-
-        dth += eventdata.Data[kRealThMatrix] - eventdata.Data[kR_tr_tg_th];
-        dphi += eventdata.Data[kRealPhi] - eventdata.Data[kR_tr_tg_ph];
+        DEBUG_MASSINFO("PrepareSieve", "Real_Th_Matrix = %f,\t Real_Phi = %f", eventdata.Data[kRealThMatrix], eventdata.Data[kRealPhi]);
     }
 
-    DEBUG_INFO("PrepareSieve", "Average : D_Th = %f,\t D_Phi = %f", dth / fNRawData, dphi / fNRawData);
-    DEBUG_INFO("PrepareSieve", "Average Extended Target Corretion: th = %f,\t rms_th = %f", exttargcorr_th / fNRawData, TMath::Sqrt(rms_exttargcorr_th / fNRawData));
+    DEBUG_INFO("PrepareSieve", "Average Extended Target Correction: th = %f,\t rms_th = %f", exttargcorr_th / fNRawData, TMath::Sqrt(rms_exttargcorr_th / fNRawData));
 
     // Make sure kCalcTh, kCalcPh is filled
     SumSquareDTh();
     SumSquareDPhi();
+
+    DEBUG_INFO("PrepareSieve", "Done!");
 }
 
 void ROpticsOpt::PrepareSieveWithField(void)
@@ -931,12 +763,7 @@ void ROpticsOpt::PrepareSieveWithField(void)
 
     // DEBUG_INFO("PrepareSieve","Entry Point");
 
-    Double_t dth = 0, dphi = 0;
     Double_t exttargcorr_th = 0, rms_exttargcorr_th = 0;
-
-    static Double_t realth[49] = {-4.757117e-02, -3.118606e-02, -1.482725e-02, 1.469667e-03, 1.788197e-02, 3.421029e-02, 5.054796e-02, -4.750603e-02, -3.115081e-02, -1.481838e-02, 1.540098e-03, 1.793715e-02, 3.422473e-02, 5.055634e-02, -4.741701e-02, -3.113236e-02, -1.479920e-02, 1.611196e-03, 1.793152e-02, 3.427514e-02, 5.060140e-02, -4.734814e-02, -3.108453e-02, -1.470525e-02, 1.583938e-03, 1.801054e-02, 3.431680e-02, 5.070621e-02, -4.740086e-02, -3.100516e-02, -1.468311e-02, 1.659532e-03, 1.805029e-02, 3.438425e-02, 5.080223e-02, -4.740846e-02, -3.101288e-02, -1.467704e-02, 1.700136e-03, 1.800140e-02, 3.442959e-02, 5.072185e-02, -4.728045e-02, -3.097109e-02, -1.467656e-02, 1.717775e-03, 1.804709e-02, 3.440180e-02, 5.078559e-02};
-
-    static Double_t realph[49] = {2.554885e-02, 2.555670e-02, 2.552006e-02, 2.556597e-02, 2.556314e-02, 2.556005e-02, 2.557823e-02, 1.803961e-02, 1.802291e-02, 1.804145e-02, 1.809925e-02, 1.805760e-02, 1.802380e-02, 1.808230e-02, 1.046707e-02, 1.045135e-02, 1.053165e-02, 1.053632e-02, 1.052928e-02, 1.056459e-02, 1.052159e-02, 2.931067e-03, 2.964311e-03, 2.965860e-03, 2.985781e-03, 3.056103e-03, 3.031187e-03, 3.017276e-03, -2.920839e-03, -2.828909e-03, -2.874403e-03, -2.857570e-03, -2.857419e-03, -2.855714e-03, -2.905724e-03, -8.849003e-03, -8.700379e-03, -8.742530e-03, -8.732396e-03, -8.748643e-03, -8.778334e-03, -8.734649e-03, -1.466587e-02, -1.455066e-02, -1.457415e-02, -1.460172e-02, -1.462746e-02, -1.466947e-02, -1.459032e-02};
 
     for (UInt_t idx = 0; idx < fNRawData; idx++) {
         EventData &eventdata = fRawData[idx];
@@ -946,7 +773,6 @@ void ROpticsOpt::PrepareSieveWithField(void)
         res = res % (NSieveRow * NSieveCol * NFoils);
         const UInt_t FoilID = res / (NSieveRow * NSieveCol); //starting 0!
         res = res % (NSieveRow * NSieveCol);
-        const UInt_t ID = res;
         const UInt_t Col = res / (NSieveRow); //starting 0!
         const UInt_t Row = res % (NSieveRow); //starting 0!
 
@@ -957,17 +783,15 @@ void ROpticsOpt::PrepareSieveWithField(void)
         eventdata.Data[kSieveY] = SieveHoleTCS.Y();
         eventdata.Data[kSieveZ] = SieveHoleTCS.Z();
 
-        const TVector3 BeamSpotHCS(eventdata.Data[kBeamX], eventdata.Data[kBeamY], targetfoils[FoilID]);
         eventdata.Data[kBeamZ] = targetfoils[FoilID];
 
-        const TVector3 BeamSpotTCS = fTCSInHCS.Inverse()*(BeamSpotHCS - fPointingOffset);
-        // const TVector3 MomDirectionTCS = SieveHoleTCS - BeamSpotTCS;
+        eventdata.Data[kRealTh] = eventdata.Data[kSimTh];
+        eventdata.Data[kRealPhi] = eventdata.Data[kSimPh];
 
-        eventdata.Data[kRealTh] = realth[ID];
-        eventdata.Data[kRealPhi] = realph[ID];
-
-        const Double_t x_tg = BeamSpotTCS.X() - BeamSpotTCS.Z() * eventdata.Data[kRealTh];
+        const Double_t x_tg = eventdata.Data[kSimX];
+        const Double_t y_tg = eventdata.Data[kSimY];
         eventdata.Data[kRealTgX] = x_tg;
+        eventdata.Data[kRealTgY] = y_tg;
 
         // Expected th ph before ext. target correction
         // fDeltaTh = fThetaCorr * x_tg;
@@ -977,60 +801,16 @@ void ROpticsOpt::PrepareSieveWithField(void)
         exttargcorr_th += x_tg * ExtTarCor_ThetaCorr;
         rms_exttargcorr_th += x_tg * ExtTarCor_ThetaCorr * x_tg * ExtTarCor_ThetaCorr;
 
-        DEBUG_MASSINFO("PrepareSieve", "%d,%d,%d: D_Th = %f,\t D_Phi = %f", FoilID, Col, Row, eventdata.Data[kRealThMatrix] - eventdata.Data[kR_tr_tg_th], eventdata.Data[kRealPhi] - eventdata.Data[kR_tr_tg_ph]);
-        DEBUG_MASSINFO("PrepareSieve", "%f,\t%f", eventdata.Data[kRealThMatrix], eventdata.Data[kR_tr_tg_th]);
-
-        dth += eventdata.Data[kRealThMatrix] - eventdata.Data[kR_tr_tg_th];
-        dphi += eventdata.Data[kRealPhi] - eventdata.Data[kR_tr_tg_ph];
+        DEBUG_MASSINFO("PrepareSieve", "Real_Th_Matrix = %f,\t Real_Phi = %f", eventdata.Data[kRealThMatrix], eventdata.Data[kRealPhi]);
     }
 
-    DEBUG_INFO("PrepareSieve", "Average : D_Th = %f,\t D_Phi = %f", dth / fNRawData, dphi / fNRawData);
-    DEBUG_INFO("PrepareSieve", "Average Extended Target Corretion: th = %f,\t rms_th = %f", exttargcorr_th / fNRawData, TMath::Sqrt(rms_exttargcorr_th / fNRawData));
+    DEBUG_INFO("PrepareSieve", "Average Extended Target Correction: th = %f,\t rmsth = %f", exttargcorr_th / fNRawData, TMath::Sqrt(rms_exttargcorr_th / fNRawData));
 
     // Make sure kCalcTh, kCalcPh is filled
     SumSquareDTh();
     SumSquareDPhi();
-}
 
-Double_t ROpticsOpt::VerifyMatrix_Sieve(void)
-{
-    // Static summarize difference between tg_th, th_ph calculated from current database and those in root file
-
-    Double_t dth = 0, dphi = 0; // Difference
-    Double_t rmsth = 0, rmsphi = 0; // mean square
-
-    Double_t theta, phi;
-
-    for (UInt_t idx = 0; idx < fNRawData; idx++) {
-        const EventData eventdata = fRawData[idx];
-
-        const Double_t x_fp = eventdata.Data[kX];
-        const Double_t(*powers)[5] = eventdata.powers;
-
-        // calculate the matrices we need
-        // CalcMatrix(x_fp, fDMatrixElems);
-        CalcMatrix(x_fp, fTMatrixElems);
-        // CalcMatrix(x_fp, fYMatrixElems);
-        // CalcMatrix(x_fp, fYTAMatrixElems);
-        CalcMatrix(x_fp, fPMatrixElems);
-        CalcMatrix(x_fp, fPTAMatrixElems);
-
-        // calculate the coordinates at the target
-        theta = CalcTargetVar(fTMatrixElems, powers);
-        phi = CalcTargetVar(fPMatrixElems, powers) + CalcTargetVar(fPTAMatrixElems, powers);
-        // phi = CalcTargetVar(fPMatrixElems, powers);
-
-        dth += theta - eventdata.Data[kR_tr_tg_th];
-        rmsth += (theta - eventdata.Data[kR_tr_tg_th])*(theta - eventdata.Data[kR_tr_tg_th]);
-
-        dphi += phi - eventdata.Data[kR_tr_tg_ph];
-        rmsphi += (phi - eventdata.Data[kR_tr_tg_ph])*(phi - eventdata.Data[kR_tr_tg_ph]);
-    }
-
-    DEBUG_INFO("VerifyMatrix_Sieve", "dth = %f, rmsth = %f", dth / fNRawData, TMath::Sqrt(rmsth / fNRawData));
-    DEBUG_INFO("VerifyMatrix_Sieve", "dphi = %f, rmsphi = %f", dphi / fNRawData, TMath::Sqrt(rmsphi / fNRawData));
-
-    return TMath::Sqrt(rmsth / fNRawData + rmsphi / fNRawData);
+    DEBUG_INFO("PrepareSieve", "Done!");
 }
 
 TCanvas * ROpticsOpt::CheckSieve(Int_t PlotFoilID)
@@ -1084,19 +864,8 @@ TCanvas * ROpticsOpt::CheckSieve(Int_t PlotFoilID)
 
         const TVector3 SieveHoleTCS = GetSieveHoleTCS(Col, Row);
 
-        TVector3 BeamSpotHCS(eventdata.Data[kBeamX], eventdata.Data[kBeamY], targetfoils[FoilID]);
-
-        // TRotation fTCSInHCS;
-        // TVector3 TCSX(0,-1,0);
-        // TVector3 TCSZ(TMath::Sin(HRSAngle),0,TMath::Cos(HRSAngle));
-        // TVector3 TCSY = TCSZ.Cross(TCSX);
-        // fTCSInHCS.RotateAxes(TCSX,TCSY,TCSZ);
-        TVector3 BeamSpotTCS = fTCSInHCS.Inverse()*(BeamSpotHCS - fPointingOffset);
-
-        // TVector3 MomDirectionTCS = SieveHoleTCS - BeamSpotTCS;
-
-        Double_t ProjectionX = BeamSpotTCS.X() + (eventdata.Data[kCalcTh] + eventdata.Data[kRealTgX] * ExtTarCor_ThetaCorr) * (SieveHoleTCS.Z() - BeamSpotTCS.Z());
-        Double_t ProjectionY = BeamSpotTCS.Y() + eventdata.Data[kCalcPh] * (SieveHoleTCS.Z() - BeamSpotTCS.Z());
+        Double_t ProjectionX = eventdata.Data[kRealTgX] + (eventdata.Data[kCalcTh] + eventdata.Data[kRealTgX] * ExtTarCor_ThetaCorr) * (SieveHoleTCS.Z());
+        Double_t ProjectionY = eventdata.Data[kRealTgY] + eventdata.Data[kCalcPh] * (SieveHoleTCS.Z());
 
         HSievePlane[FoilID]->Fill(ProjectionY, ProjectionX);
 
@@ -1176,7 +945,7 @@ TCanvas * ROpticsOpt::CheckSieve(Int_t PlotFoilID)
     return c1;
 }
 
-Double_t ROpticsOpt::SumSquareDTh(Bool_t PrintEachHole)
+Double_t ROpticsOpt::SumSquareDTh(void)
 {
     // return square sum of diff between calculated tg_th and expected tg_th
 
@@ -1187,18 +956,6 @@ Double_t ROpticsOpt::SumSquareDTh(Bool_t PrintEachHole)
     NCall++;
 
     Double_t theta;
-
-    // stat. for each hole
-    Double_t * stat_dev = NULL;
-    Double_t * stat_rms = NULL;
-    Int_t * stat_cnt = NULL;
-    if (PrintEachHole) {
-        stat_dev = new Double_t[kMaxDataGroup];
-        stat_rms = new Double_t[kMaxDataGroup];
-        stat_cnt = new Int_t[kMaxDataGroup];
-
-        for (int i = 0; i < kMaxDataGroup; i++) stat_dev[i] = stat_rms[i] = stat_cnt[i] = 0;
-    }
 
     for (UInt_t idx = 0; idx < fNRawData; idx++) {
         EventData &eventdata = fRawData[idx];
@@ -1220,83 +977,19 @@ Double_t ROpticsOpt::SumSquareDTh(Bool_t PrintEachHole)
         dth += theta - eventdata.Data[kRealThMatrix];
         rmsth += (theta - eventdata.Data[kRealThMatrix])*(theta - eventdata.Data[kRealThMatrix]);
 
-        if (PrintEachHole) {
-            UInt_t HoleID = (UInt_t) eventdata.Data[kCutID];
-            assert(HoleID < kMaxDataGroup);
-
-            stat_dev[HoleID] += theta - eventdata.Data[kRealThMatrix];
-            stat_rms[HoleID] += (theta - eventdata.Data[kRealThMatrix])*(theta - eventdata.Data[kRealThMatrix]);
-            stat_cnt[HoleID] += 1;
-        }
-
         DEBUG_MASSINFO("SumSquareDTh", "D_Th = %f = \t%f - \t%f", theta - eventdata.Data[kRealThMatrix], theta, eventdata.Data[kRealThMatrix]);
-        DEBUG_MASSINFO("SumSquareDTh", "%d : %f, %f, %f, %f, %f", kRealTh, eventdata.Data[kRealTh - 2], eventdata.Data[kRealTh - 1], eventdata.Data[kRealTh], eventdata.Data[kRealTh + 1], eventdata.Data[kRealTh + 2]);
 
         // save the results
         eventdata.Data[kCalcTh] = theta;
     }
 
-    // DEBUG_INFO("SumSquareDTh", "#%d : dth = %f, rmsth = %f", NCall, dth / fNRawData, TMath::Sqrt(rmsth / fNRawData));
-    printf("SumSquareDTh: #%d : dth = %f, rmsth = %f\n", NCall, dth / fNRawData, TMath::Sqrt(rmsth / fNRawData));
-
-    if (PrintEachHole) {
-        DEBUG_INFO("SumSquareDTh", "Print Deviation and RMS of each hole:");
-        cout << "Config\tCol\tRow\tStat.\tDeviation\tRMS\n";
-
-        Double_t sum_dev = 0, sum_absdev = 0, sum_rms = 0, sum_cnt = 0, weight = 0, weighted_dev = 0;
-        Double_t sum_devabs[NFoils] = {0}, sum_nhole[NFoils] = {0}, sum_devabserr[NFoils] = {0};
-        for (UInt_t HoleID = 0; HoleID < kMaxDataGroup; HoleID++) {
-            if (stat_cnt[HoleID] <= 0) continue;
-
-            UInt_t res = HoleID;
-            //const UInt_t KineID = res / (NSieveRow * NSieveCol * NFoils); //starting 0!
-            res = res % (NSieveRow * NSieveCol * NFoils);
-            const UInt_t FoilID = res / (NSieveRow * NSieveCol); //starting 0!
-            assert(FoilID < NFoils);
-            res = res % (NSieveRow * NSieveCol);
-            //const UInt_t Col = res / (NSieveRow); //starting 0!
-            //const UInt_t Row = res % (NSieveRow); //starting 0!
-
-            //Col, Row;
-            Double_t dev = stat_dev[HoleID] / stat_cnt[HoleID];
-            Double_t rms = TMath::Sqrt(stat_rms[HoleID] / stat_cnt[HoleID]);
-
-            sum_cnt++;
-            sum_dev += dev;
-            sum_rms += rms;
-            sum_absdev += TMath::Abs(dev);
-
-            weight += stat_cnt[HoleID] / rms / rms;
-            weighted_dev += TMath::Abs(dev) * stat_cnt[HoleID] / rms / rms;
-
-            sum_devabs[FoilID] += TMath::Abs(dev);
-            sum_nhole[FoilID] += 1;
-            sum_devabserr[FoilID] += rms * rms / stat_cnt[HoleID];
-        }
-
-        cout << "All(Same wt each hole):\t" << (int) sum_cnt << "\t" << sum_dev / sum_cnt << "\t" << sum_rms / sum_cnt << "\n";
-
-        // DEBUG_INFO("SumSquareDTh", "Average |deviation| = %f +/- %f (stat. w.)", weighted_dev / weight, TMath::Sqrt(1 / weight));
-        DEBUG_INFO("SumSquareDTh", "Average |deviation| = %f ", sum_absdev / sum_cnt);
-        DEBUG_INFO("SumSquareDTh", "Average |deviation| =\n %f +/- %f \n %f +/- %f \n %f +/- %f \n %f +/- %f \n %f +/- %f \n %f +/- %f \n %f +/- %f ",
-                sum_devabs[0] / sum_nhole[0], TMath::Sqrt(sum_devabserr[0]) / sum_nhole[0],
-                sum_devabs[1] / sum_nhole[1], TMath::Sqrt(sum_devabserr[1]) / sum_nhole[1],
-                sum_devabs[2] / sum_nhole[2], TMath::Sqrt(sum_devabserr[2]) / sum_nhole[2],
-                sum_devabs[3] / sum_nhole[3], TMath::Sqrt(sum_devabserr[3]) / sum_nhole[3],
-                sum_devabs[4] / sum_nhole[4], TMath::Sqrt(sum_devabserr[4]) / sum_nhole[4],
-                sum_devabs[5] / sum_nhole[5], TMath::Sqrt(sum_devabserr[5]) / sum_nhole[5],
-                sum_devabs[6] / sum_nhole[6], TMath::Sqrt(sum_devabserr[6]) / sum_nhole[6]
-                );
-
-        delete [] stat_dev;
-        delete [] stat_rms;
-        delete [] stat_cnt;
-    }
+    // DEBUG_INFO("SumSquareDTh", "#%d : dth = %f,\t rmsth = %f", NCall, dth / fNRawData, TMath::Sqrt(rmsth / fNRawData));
+    printf("SumSquareDTh: #%d : dth = %f,\t rmsth = %f\n", NCall, dth / fNRawData, TMath::Sqrt(rmsth / fNRawData));
 
     return rmsth;
 }
 
-Double_t ROpticsOpt::SumSquareDPhi(Bool_t PrintEachHole)
+Double_t ROpticsOpt::SumSquareDPhi()
 {
     // return square sum of diff between calculated tg_ph and expected tg_ph
 
@@ -1307,18 +1000,6 @@ Double_t ROpticsOpt::SumSquareDPhi(Bool_t PrintEachHole)
     NCall++;
 
     Double_t phi;
-
-    // stat. for each hole
-    Double_t * stat_dev = NULL;
-    Double_t * stat_rms = NULL;
-    Int_t * stat_cnt = NULL;
-    if (PrintEachHole) {
-        stat_dev = new Double_t[kMaxDataGroup];
-        stat_rms = new Double_t[kMaxDataGroup];
-        stat_cnt = new Int_t[kMaxDataGroup];
-
-        for (int i = 0; i < kMaxDataGroup; i++) stat_dev[i] = stat_rms[i] = stat_cnt[i] = 0;
-    }
 
     for (UInt_t idx = 0; idx < fNRawData; idx++) {
         EventData &eventdata = fRawData[idx];
@@ -1340,75 +1021,14 @@ Double_t ROpticsOpt::SumSquareDPhi(Bool_t PrintEachHole)
         dphi += phi - eventdata.Data[kRealPhi];
         rmsphi += (phi - eventdata.Data[kRealPhi])*(phi - eventdata.Data[kRealPhi]);
 
-        if (PrintEachHole) {
-            UInt_t HoleID = (UInt_t) eventdata.Data[kCutID];
-            assert(HoleID < kMaxDataGroup);
-
-            stat_dev[HoleID] += phi - eventdata.Data[kRealPhi];
-            stat_rms[HoleID] += (phi - eventdata.Data[kRealPhi])*(phi - eventdata.Data[kRealPhi]);
-            stat_cnt[HoleID] += 1;
-        }
+        DEBUG_MASSINFO("SumSquareDPhi", "D_Phi = %f = \t%f - \t%f", phi - eventdata.Data[kRealPhi], phi, eventdata.Data[kRealPhi]);
 
         //save the results
         eventdata.Data[kCalcPh] = phi;
     }
 
-    // DEBUG_INFO("SumSquareDPhi", "#%d : dphi = %f, rmsphi = %f", NCall, dphi / fNRawData, TMath::Sqrt(rmsphi / fNRawData));
-    printf("SumSquareDPhi: #%d : dphi = %f, rmsphi = %f\n", NCall, dphi / fNRawData, TMath::Sqrt(rmsphi / fNRawData));
-
-    if (PrintEachHole) {
-        DEBUG_INFO("SumSquareDTh", "Print Deviation and RMS of each hole:");
-        cout << "Config\tCol\tRow\tStat.\tDeviation\tRMS\n";
-
-        Double_t sum_dev = 0, sum_absdev = 0, sum_rms = 0, sum_cnt = 0, weight = 0, weighted_dev = 0;
-        Double_t sum_devabs[NFoils] = {0}, sum_nhole[NFoils] = {0}, sum_devabserr[NFoils] = {0};
-        for (UInt_t HoleID = 0; HoleID < kMaxDataGroup; HoleID++) {
-            if (stat_cnt[HoleID] <= 0) continue;
-
-            UInt_t res = HoleID;
-            //const UInt_t KineID = res / (NSieveRow * NSieveCol * NFoils); //starting 0!
-            res = res % (NSieveRow * NSieveCol * NFoils);
-            const UInt_t FoilID = res / (NSieveRow * NSieveCol); //starting 0!
-            assert(FoilID < NFoils);
-            res = res % (NSieveRow * NSieveCol);
-            //const UInt_t Col = res / (NSieveRow); //starting 0!
-            //const UInt_t Row = res % (NSieveRow); //starting 0!
-
-            //	Col, Row;
-            Double_t dev = stat_dev[HoleID] / stat_cnt[HoleID];
-            Double_t rms = TMath::Sqrt(stat_rms[HoleID] / stat_cnt[HoleID]);
-
-            sum_cnt++;
-            sum_dev += dev;
-            sum_rms += rms;
-            sum_absdev += TMath::Abs(dev);
-
-            weight += stat_cnt[HoleID] / rms / rms;
-            weighted_dev += TMath::Abs(dev) * stat_cnt[HoleID] / rms / rms;
-
-            sum_devabs[FoilID] += TMath::Abs(dev);
-            sum_nhole[FoilID] += 1;
-            sum_devabserr[FoilID] += rms * rms / stat_cnt[HoleID];
-        }
-
-        cout << "All(Same wt each hole):\t" << (int) sum_cnt << "\t" << sum_dev / sum_cnt << "\t" << sum_rms / sum_cnt << "\n";
-
-        //DEBUG_INFO("SumSquareDPhi", "Average |deviation| = %f +/- %f (stat. w.)", weighted_dev / weight, TMath::Sqrt(1 / weight));
-        DEBUG_INFO("SumSquareDPhi", "Average |deviation| = %f ", sum_absdev / sum_cnt);
-        DEBUG_INFO("SumSquareDPhi", "Average |deviation| =\n %f +/- %f \n %f +/- %f \n %f +/- %f \n %f +/- %f \n %f +/- %f \n %f +/- %f \n %f +/- %f ",
-                sum_devabs[0] / sum_nhole[0], TMath::Sqrt(sum_devabserr[0]) / sum_nhole[0],
-                sum_devabs[1] / sum_nhole[1], TMath::Sqrt(sum_devabserr[1]) / sum_nhole[1],
-                sum_devabs[2] / sum_nhole[2], TMath::Sqrt(sum_devabserr[2]) / sum_nhole[2],
-                sum_devabs[3] / sum_nhole[3], TMath::Sqrt(sum_devabserr[3]) / sum_nhole[3],
-                sum_devabs[4] / sum_nhole[4], TMath::Sqrt(sum_devabserr[4]) / sum_nhole[4],
-                sum_devabs[5] / sum_nhole[5], TMath::Sqrt(sum_devabserr[5]) / sum_nhole[5],
-                sum_devabs[6] / sum_nhole[6], TMath::Sqrt(sum_devabserr[6]) / sum_nhole[6]
-                );
-
-        delete [] stat_dev;
-        delete [] stat_rms;
-        delete [] stat_cnt;
-    }
+    // DEBUG_INFO("SumSquareDPhi", "#%d : dphi = %f,\t rmsphi = %f", NCall, dphi / fNRawData, TMath::Sqrt(rmsphi / fNRawData));
+    printf("SumSquareDPhi: #%d : dphi = %f,\t rmsphi = %f\n", NCall, dphi / fNRawData, TMath::Sqrt(rmsphi / fNRawData));
 
     return rmsphi;
 }
@@ -1468,7 +1088,7 @@ Double_t ROpticsOpt::SumSquareDBeamX(void)
             Double_t n = nxlab[i];
             Double_t rms = TMath::Sqrt(sum2 / n - (sum / n)*(sum / n));
             rmsxlab += rms;
-            printf("SumSquareDBeamX: #%d : xlab(%d) = %f, rmsxlab(%d) = %f\n", NCall, i, sum / n, i, rms);
+            printf("SumSquareDBeamX: #%d : xlab(%d) = %f,\t rmsxlab(%d) = %f\n", NCall, i, sum / n, i, rms);
         }
 
     return rmsxlab;
@@ -1530,7 +1150,7 @@ Double_t ROpticsOpt::SumSquareDBeamY(void)
             Double_t n = nylab[i];
             Double_t rms = TMath::Sqrt(sum2 / n - (sum / n)*(sum / n));
             rmsylab += rms;
-            printf("SumSquareDBeamY: #%d : ylab(%d) = %f, rmsylab(%d) = %f\n", NCall, i, sum / n, i, rms);
+            printf("SumSquareDBeamY: #%d : ylab(%d) = %f,\t rmsylab(%d) = %f\n", NCall, i, sum / n, i, rms);
         }
 
     return rmsylab;
@@ -1539,8 +1159,6 @@ Double_t ROpticsOpt::SumSquareDBeamY(void)
 void ROpticsOpt::PrepareTgY(void)
 {
     // calculate kRealTgY
-
-    Double_t dtg_y = 0;
 
     for (UInt_t idx = 0; idx < fNRawData; idx++) {
         EventData &eventdata = fRawData[idx];
@@ -1568,67 +1186,39 @@ void ROpticsOpt::PrepareTgY(void)
         eventdata.Data[kRealTgY] = Real_Tg_Y;
         eventdata.Data[kRealReactZ] = targetfoils[FoilID];
 
-        dtg_y += (eventdata.Data[kRealTgY] - eventdata.Data[kR_tr_tg_y]);
-
-        // redundant checks
-        // TVector3 Tg_YSpotTCS(0, Real_Tg_Y, 0);
-        // TVector3 PhiDirectionTCS(0, eventdata.Data[kR_tr_tg_ph], 1);
-
-        // TVector3 Tg_YSpotHCS = fTCSInHCS * Tg_YSpotTCS + fPointingOffset;
-        // TVector3 PhiDirectionHCS = fTCSInHCS * PhiDirectionTCS;
-
-        // assert(Tg_YSpotHCS.Y() == MissPointY); // check coordinates conversions
-        // assert(PhiDirectionHCS.Y() == 0); // check coordinates conversions
-
-        // Double_t reactz = Tg_YSpotHCS.Z()-(Tg_YSpotHCS.X() - eventdata.Data[kBeamX]) / PhiDirectionHCS.X() * PhiDirectionHCS.Z();
-
-        // DEBUG_MASSINFO("PrepareVertex", "reactz =%f, eventdata.Data[kRealReactZ]=%f", reactz, eventdata.Data[kRealReactZ]);
-        // DEBUG_MASSINFO("PrepareVertex", "Real_Tg_Y =%f, eventdata.Data[kRealReactZ]=%f, targetfoils[FoilID]=%f", Real_Tg_Y, eventdata.Data[kR_tr_tg_ph], targetfoils[FoilID]);
-        DEBUG_MASSINFO("PrepareTgY", "dtg_y = %f", eventdata.Data[kRealTgY] - eventdata.Data[kR_tr_tg_y]);
-        // assert(TMath::Abs(reactz - eventdata.Data[kRealReactZ]) < 1e-4); //check internal calculation consistency
+        DEBUG_MASSINFO("PrepareVertex", "Real_Tg_Y = %f,\t Real_ReactZ = %f", Real_Tg_Y, eventdata.Data[kRealReactZ]);
     }
-
-    DEBUG_INFO("PrepareVertex", "Average : dtg_y = %f", dtg_y / fNRawData);
 
     // make sure kCalcTh, kCalcPh is filled
     SumSquareDTgY();
+
+    DEBUG_INFO("PrepareVertex", "Done!");
 }
 
-Double_t ROpticsOpt::VerifyMatrix_TgY(void)
+void ROpticsOpt::PrepareTgYWithField(void)
 {
-    // static summarize difference between tg_y calculated from current database and those in root file
-
-    Double_t dtg_y = 0; //Difference
-    Double_t dtg_y_rms = 0; //mean square
-
-    Double_t y;
+    // calculate kRealTgY
 
     for (UInt_t idx = 0; idx < fNRawData; idx++) {
-        const EventData eventdata = fRawData[idx];
+        EventData &eventdata = fRawData[idx];
 
-        Double_t x_fp = eventdata.Data[kX];
-        const Double_t(*powers)[5] = eventdata.powers;
+        UInt_t res = (UInt_t) eventdata.Data[kCutID];
+        // const UInt_t KineID = res / (NSieveRow * NSieveCol * NFoils); //starting 0!
+        res = res % (NSieveRow * NSieveCol * NFoils);
+        const UInt_t FoilID = res / (NSieveRow * NSieveCol); //starting 0!
 
-        // calculate the matrices we need
-        // CalcMatrix(x_fp, fDMatrixElems);
-        // CalcMatrix(x_fp, fTMatrixElems);
-        CalcMatrix(x_fp, fYMatrixElems);
-        CalcMatrix(x_fp, fYTAMatrixElems);
-        // CalcMatrix(x_fp, fPMatrixElems);
-        // CalcMatrix(x_fp, fPTAMatrixElems);
+        assert(FoilID < NFoils); //check array index size
 
-        // calculate the coordinates at the target
-        y = CalcTargetVar(fYMatrixElems, powers) + CalcTargetVar(fYTAMatrixElems, powers);
+        eventdata.Data[kRealTgY] = eventdata.Data[kSimY];
+        eventdata.Data[kRealReactZ] = targetfoils[FoilID];
 
-        dtg_y += y - eventdata.Data[kR_tr_tg_y];
-        dtg_y_rms += (y - eventdata.Data[kR_tr_tg_y])*(y - eventdata.Data[kR_tr_tg_y]);
-
-        DEBUG_MASSINFO("VerifyMatrix_TgY", "y = %f, eventdata.Data[kR_tr_tg_y] = %f", y, eventdata.Data[kR_tr_tg_y]);
+        DEBUG_MASSINFO("PrepareVertex", "Real_Tg_Y = %f,\t Real_ReactZ = %f", eventdata.Data[kRealTgY], eventdata.Data[kRealReactZ]);
     }
 
-    DEBUG_INFO("VerifyMatrix_Vertex", "dtg_y = %f, dtg_y_rms = %f", dtg_y / fNRawData, TMath::Sqrt(dtg_y_rms / fNRawData));
+    // make sure kCalcTh, kCalcPh is filled
+    SumSquareDTgY();
 
-    return TMath::Sqrt(dtg_y_rms / fNRawData);
+    DEBUG_INFO("PrepareVertex", "Done!");
 }
 
 TCanvas * ROpticsOpt::CheckTgY()
@@ -1764,72 +1354,6 @@ Double_t ROpticsOpt::SumSquareDTgY(void)
     return dtg_y_rms;
 }
 
-Double_t ROpticsOpt::SumSquareDTgYAverFoils(void)
-{
-    // return square sum of diff between calculated tg_y and expected tg_y
-    // Statistical Weight on each foil is same
-
-    Double_t dtg_y = 0; //Difference
-    Double_t dtg_y_rms = 0; //mean square
-
-    static UInt_t NCall = 0;
-    NCall++;
-
-    Double_t tg_y;
-
-    Double_t dtg_y_foil[NFoils] = {0};
-    Double_t rmstg_y_foil[NFoils] = {0};
-    UInt_t ndata_foil[NFoils] = {0};
-
-    for (UInt_t idx = 0; idx < fNRawData; idx++) {
-        EventData &eventdata = fRawData[idx];
-
-        Double_t x_fp = eventdata.Data[kX];
-        const Double_t(*powers)[5] = eventdata.powers;
-
-        // calculate the matrices we need
-        // CalcMatrix(x_fp, fDMatrixElems);
-        // CalcMatrix(x_fp, fTMatrixElems);
-        CalcMatrix(x_fp, fYMatrixElems);
-        CalcMatrix(x_fp, fYTAMatrixElems);
-        // CalcMatrix(x_fp, fPMatrixElems);
-        // CalcMatrix(x_fp, fPTAMatrixElems);
-
-        // calculate the coordinates at the target
-        tg_y = CalcTargetVar(fYMatrixElems, powers) + CalcTargetVar(fYTAMatrixElems, powers);
-
-        dtg_y += tg_y - eventdata.Data[kRealTgY];
-        dtg_y_rms += (tg_y - eventdata.Data[kRealTgY])*(tg_y - eventdata.Data[kRealTgY]);
-
-        // save the results
-        eventdata.Data[kCalcTgY] = tg_y;
-
-        // statics by foils
-        const UInt_t FoilID = (UInt_t) eventdata.Data[kCutID] / (NSieveRow * NSieveCol * NKine);
-        const Double_t ArbitaryVertexShift = fArbitaryVertexShift[FoilID] * (-TMath::Sin(HRSAngle)); //arbitary shifts
-        ndata_foil[FoilID]++;
-        dtg_y_foil[FoilID] += eventdata.Data[kCalcTgY] - eventdata.Data[kRealTgY] + ArbitaryVertexShift;
-        rmstg_y_foil[FoilID] += (eventdata.Data[kCalcTgY] - eventdata.Data[kRealTgY] + ArbitaryVertexShift)*(eventdata.Data[kCalcTgY] - eventdata.Data[kRealTgY] + ArbitaryVertexShift);
-    }
-
-    Double_t dtg_y_foilaver = 0; //Difference
-    Double_t dtg_y_rms_foilaver = 0; //mean square
-    for (UInt_t FoilID = 0; FoilID < NFoils; FoilID++) {
-        assert(ndata_foil[FoilID]); // make sure there are at least one event on this foil
-        const UInt_t N = ndata_foil[FoilID];
-
-        dtg_y_foilaver += dtg_y_foil[FoilID] / N;
-        dtg_y_rms_foilaver += rmstg_y_foil[FoilID] / N;
-    }
-    dtg_y_foilaver = dtg_y_foilaver / NFoils*fNRawData;
-    dtg_y_rms_foilaver = dtg_y_rms_foilaver / NFoils*fNRawData;
-
-    DEBUG_INFO("SumSquareDTgY", "#%d Foil Ave: dtg_y = %f, dtg_y_rms = %f", NCall, dtg_y_foilaver / fNRawData, TMath::Sqrt(dtg_y_rms_foilaver / fNRawData));
-    DEBUG_INFO("SumSquareDTgY", "#%d : dtg_y = %f, dtg_y_rms = %f", NCall, dtg_y / fNRawData, TMath::Sqrt(dtg_y_rms / fNRawData));
-
-    return dtg_y_rms_foilaver;
-}
-
 void ROpticsOpt::PrepareDp(void)
 {
     // calate expected dp_kin, dp_kin offsets ....
@@ -1847,10 +1371,7 @@ void ROpticsOpt::PrepareDp(void)
         printf("%f  ", RadiationLossByFoil[FoilID]*1000);
     printf("}\n");
 
-    // set fDMatrixElems as current matrix to optimize
-    fCurrentMatrixElems = &fDMatrixElems;
-
-    Double_t dth = 0, dphi = 0, scatang = 0;
+    Double_t scatang = 0;
     Double_t dpkinoff = 0, dpkinoff_rms = 0;
     fNCalibData = 0;
     Double_t exttargcorr_dp = 0, rms_exttargcorr_dp = 0;
@@ -1882,9 +1403,6 @@ void ROpticsOpt::PrepareDp(void)
         if (!ExtraDataFlag) fNCalibData++;
         eventdata.Data[kKineID] = KineID;
         eventdata.Data[kCentralp] = HRSCentralMom[KineID];
-        const Double_t EPICS_P = eventdata.Data[kR_tr_p] / (1. + eventdata.Data[kR_tr_tg_dp]);
-        DEBUG_MASSINFO("PrepareDp", "Central_P/GeV: EPICS=%f (%f, %f), NMR=%f", EPICS_P, eventdata.Data[kR_tr_p], eventdata.Data[kR_tr_tg_dp], eventdata.Data[kCentralp]);
-        assert(TMath::Abs(EPICS_P - eventdata.Data[kCentralp]) < 5e-1); // WARNING: Change to 1e-3 for normal replays
 
         const TVector3 SieveHoleTCS = GetSieveHoleTCS(Col, Row);
 
@@ -1902,13 +1420,8 @@ void ROpticsOpt::PrepareDp(void)
         eventdata.Data[kRealTgX] = x_tg;
         eventdata.Data[kRealThMatrix] = eventdata.Data[kRealTh] - x_tg * ExtTarCor_ThetaCorr;
 
-        DEBUG_MASSINFO("PrepareDp", "%d,%d,%d: D_Th = %f,\t D_Phi = %f", FoilID, Col, Row, eventdata.Data[kRealThMatrix] - eventdata.Data[kR_tr_tg_th], eventdata.Data[kRealPhi] - eventdata.Data[kR_tr_tg_ph]);
-        DEBUG_MASSINFO("PrepareDp", "RealTh=%f,\tL_tr_tg_th=%f", eventdata.Data[kRealThMatrix], eventdata.Data[kR_tr_tg_th]);
-        DEBUG_MASSINFO("PrepareDp", "RealPh=%f,\tkR_tr_tg_ph=%f", eventdata.Data[kRealPhi], eventdata.Data[kR_tr_tg_ph]);
-        DEBUG_MASSINFO("PrepareDp", "SieveHoleY=%f,\tMom.Y=%f,\tMom.Z=%f", SieveHoleTCS.y(), MomDirectionTCS.Y(), MomDirectionTCS.Z());
-
-        dth += eventdata.Data[kRealThMatrix] - eventdata.Data[kR_tr_tg_th];
-        dphi += eventdata.Data[kRealPhi] - eventdata.Data[kR_tr_tg_ph];
+        DEBUG_MASSINFO("PrepareDp", "RealTh = %f,\t RealPh = %f", eventdata.Data[kRealThMatrix], eventdata.Data[kRealPhi]);
+        DEBUG_MASSINFO("PrepareDp", "SieveHoleY = %f,\t Mom_Y = %f,\t Mom_Z = %f", SieveHoleTCS.Y(), MomDirectionTCS.Y(), MomDirectionTCS.Z());
 
         TVector3 MomDirectionHCS = fTCSInHCS*MomDirectionTCS;
         TVector3 BeamDirection(0, 0, 1);
@@ -1931,43 +1444,23 @@ void ROpticsOpt::PrepareDp(void)
         eventdata.Data[kRadiLossDp] = RadiationLossByFoil[FoilID] / eventdata.Data[kCentralp];
         eventdata.Data[kRealDpKin] = ScatMom(DM, Ma, P0, TMath::Abs(HRSAngle)) / eventdata.Data[kCentralp] - 1 - eventdata.Data[kRadiLossDp];
 
-        DEBUG_MASSINFO("PrepareDp", "ScatterMom=%f,\t Centralp=%f,radloss = %f, ebeam=%f", ScatMom(DM, Ma, P0, TMath::Abs(HRSAngle)), eventdata.Data[kCentralp], eventdata.Data[kRadiLossDp], P0);
+        DEBUG_MASSINFO("PrepareDp", "ScatterMom = %f,\t Centralp = %f,\t radloss = %f,\t ebeam = %f", ScatMom(DM, Ma, P0, TMath::Abs(HRSAngle)), eventdata.Data[kCentralp], eventdata.Data[kRadiLossDp], P0);
 
-        // Expected th ph before ext. target correction
-        // fDeltaTh = fThetaCorr * x_tg;
-        // fDeltaDp = x_tg / fDeltaCorr;
-        // Double_t theta = trkifo->GetTheta() + fDeltaTh;
-        // Double_t dp = trkifo->GetDp() + fDeltaDp;
         eventdata.Data[kRealDpKinMatrix] = eventdata.Data[kRealDpKin] - x_tg / ExtTarCor_DeltaCorr;
 
         exttargcorr_dp += x_tg / ExtTarCor_DeltaCorr;
         rms_exttargcorr_dp += (x_tg / ExtTarCor_DeltaCorr)*(x_tg / ExtTarCor_DeltaCorr);
 
-        // calculate expected dp_kin for all other exciation states
+        // calculate expected dp_kin for all other excitation states
         for (UInt_t ExcitID = 0; ExcitID < NExcitationStates; ExcitID++) {
             assert(kRealDpKinExcitations + ExcitID < kRealTh); //check array index size
             eventdata.Data[kRealDpKinExcitations + ExcitID] = ScatMom(ExcitationEnergyList[ExcitID], Ma, P0, TMath::Abs(HRSAngle)) / eventdata.Data[kCentralp] - 1;
         }
 
-        DEBUG_MASSINFO("PrepareDp", "ScatterAngle=%f,\tDpKinOffsets=%f", ScatteringAngle / TMath::Pi()*180, DpKinOffsets);
-
-        // data self consistency check
-        if (idx > 0) {
-            const EventData &lasteventdata = fRawData[idx - 1];
-            if (eventdata.Data[kRunNum] == lasteventdata.Data[kRunNum]) {
-                assert(eventdata.Data[kKineID] == lasteventdata.Data[kKineID]); //check data continuity; check cut definition consistency
-                assert(TMath::Abs(eventdata.Data[kCentralp] - lasteventdata.Data[kCentralp]) < 1e-5); //check data continuity; check cut definition consistency
-                assert(TMath::Abs(eventdata.Data[kRealDpKin] - lasteventdata.Data[kRealDpKin]) < 4e-3); //check data continuity; check cut definition consistency
-            } else { // new run
-                DEBUG_INFO("PrepareDp", "Run %4.0f : Kinematics #%1.0f, Central p = %fGeV, Excit. State Selected=%f MeV, Dp Kin=%f%%", eventdata.Data[kRunNum], eventdata.Data[kKineID], eventdata.Data[kCentralp], 1000 * ExcitationEnergy[KineID], 100 * eventdata.Data[kRealDpKin]);
-            }
-        } else { // first run
-            DEBUG_INFO("PrepareDp", "Run %4.0f : Kinematics #%1.0f, Central p = %fGeV, Excit. State Selected=%f MeV, Dp Kin=%f%%", eventdata.Data[kRunNum], eventdata.Data[kKineID], eventdata.Data[kCentralp], 1000 * ExcitationEnergy[KineID], 100 * eventdata.Data[kRealDpKin]);
-        }
+        DEBUG_MASSINFO("PrepareDp", "ScatterAngle = %f,\t DpKinOffsets = %f", ScatteringAngle / TMath::Pi()*180, DpKinOffsets);
     }
 
     DEBUG_INFO("PrepareDp", "%d out of %d data is for calibration", fNCalibData, fNRawData);
-    DEBUG_INFO("PrepareDp", "Average : D_Th = %f,\t D_Phi = %f", dth / fNRawData, dphi / fNRawData);
     DEBUG_INFO("PrepareDp", "Average : ScatteringAngle = %f", scatang / fNRawData / TMath::Pi()*180);
     DEBUG_INFO("PrepareDp", "Average DpKinOffsets = %f, RMS DpKinOffsets = %f", dpkinoff / fNRawData, TMath::Sqrt(dpkinoff_rms / fNRawData));
     DEBUG_INFO("PrepareDp", "Average Extended Target Corretion: dp = %f,\t rms_dp = %f", exttargcorr_dp / fNRawData, TMath::Sqrt(rms_exttargcorr_dp / fNRawData));
@@ -1976,47 +1469,117 @@ void ROpticsOpt::PrepareDp(void)
     SumSquareDTh();
     SumSquareDPhi();
     SumSquareDp();
+
+    DEBUG_INFO("PrepareDp", "Done!");
 }
 
-Double_t ROpticsOpt::VerifyMatrix_Dp(void)
+void ROpticsOpt::PrepareDpWithField(void)
 {
-    // static summarize difference between tg_dp calculated from current database and those in root file
+    // calate expected dp_kin, dp_kin offsets ....
+    // Fill up fRawData[].Data[] kKineID thr kRealDpKin
 
-    Double_t d_dp = 0; //Difference
-    Double_t rms_dp = 0; //mean square
+    // print Central Momentums
+    printf("HRSCentralMom[%d] (GeV) = {", NKine);
+    for (UInt_t KineID = 0; KineID < NKine; KineID++)
+        printf("%f  ", HRSCentralMom[KineID]);
+    printf("}\n");
 
-    static UInt_t NCall = 0;
-    NCall++;
+    // print radiation loss numbers
+    printf("RadiationLossByFoil[%d] (MeV) = {", NFoils);
+    for (UInt_t FoilID = 0; FoilID < NFoils; FoilID++)
+        printf("%f  ", RadiationLossByFoil[FoilID]*1000);
+    printf("}\n");
+
+    Double_t scatang = 0;
+    Double_t dpkinoff = 0, dpkinoff_rms = 0;
+    fNCalibData = 0;
+    Double_t exttargcorr_dp = 0, rms_exttargcorr_dp = 0;
 
     for (UInt_t idx = 0; idx < fNRawData; idx++) {
-        Double_t dp, dp_kin;
+        DEBUG_MASSINFO("PrepareDp", "=========== Event %d ===========", idx);
 
         EventData &eventdata = fRawData[idx];
 
-        Double_t x_fp = eventdata.Data[kX];
-        const Double_t(*powers)[5] = eventdata.powers;
+        // decoding kCutID
+        UInt_t res = (UInt_t) eventdata.Data[kCutID];
 
-        // calculate the matrices we need
-        CalcMatrix(x_fp, fDMatrixElems);
-        // CalcMatrix(x_fp, fTMatrixElems);
-        // CalcMatrix(x_fp, fYMatrixElems);
-        // CalcMatrix(x_fp, fYTAMatrixElems);
-        // CalcMatrix(x_fp, fPMatrixElems);
-        // CalcMatrix(x_fp, fPTAMatrixElems);
+        const UInt_t ExtraDataFlag = res / (NSieveRow * NSieveCol * NFoils * NKine);
+        res = res % (NSieveRow * NSieveCol * NFoils * NKine);
+        const UInt_t KineID = res / (NSieveRow * NSieveCol * NFoils); //starting 0!
+        res = res % (NSieveRow * NSieveCol * NFoils);
+        const UInt_t FoilID = res / (NSieveRow * NSieveCol); //starting 0!
+        res = res % (NSieveRow * NSieveCol);
+        assert(ExtraDataFlag < 2); //Check flag range. beyond 2 is not used
+        assert(KineID < NKine); //check array index size
+        assert(FoilID < NFoils); //check array index size
 
-        // calculate momentum
-        dp = CalcTargetVar(fDMatrixElems, powers);
-        dp_kin = dp - eventdata.Data[kDpKinOffsets];
+        DEBUG_MASSINFO("PrepareDp", "%d => KineID=%d,\tFoilID=%d", (UInt_t) eventdata.Data[kCutID], KineID, FoilID);
 
-        d_dp += dp - eventdata.Data[kR_tr_tg_dp];
-        rms_dp += (dp - eventdata.Data[kR_tr_tg_dp])*(dp - eventdata.Data[kR_tr_tg_dp]);
+        // write some variables
+        eventdata.Data[kExtraDataFlag] = ExtraDataFlag;
+        if (!ExtraDataFlag) fNCalibData++;
+        eventdata.Data[kKineID] = KineID;
+        eventdata.Data[kCentralp] = HRSCentralMom[KineID];
 
-        DEBUG_MASSINFO("SumSquareDp", "d_dp = %f = \t%f - \t%f", dp_kin - eventdata.Data[kRealDpKin], dp_kin, eventdata.Data[kRealDpKin]);
+        eventdata.Data[kRealTh] = eventdata.Data[kOrinTh];
+        eventdata.Data[kRealPhi] = eventdata.Data[kOrinPh];
+
+        const Double_t x_tg = eventdata.Data[kSimX];
+        eventdata.Data[kRealTgX] = x_tg;
+        eventdata.Data[kRealThMatrix] = eventdata.Data[kRealTh] - x_tg * ExtTarCor_ThetaCorr;
+
+        DEBUG_MASSINFO("PrepareDp", "RealTh = %f,\t RealPh = %f", eventdata.Data[kRealThMatrix], eventdata.Data[kRealPhi]);
+
+        TVector3 MomDirectionTCS(eventdata.Data[kRealTh], eventdata.Data[kRealPhi], 1);
+
+        TVector3 MomDirectionHCS = fTCSInHCS*MomDirectionTCS;
+        TVector3 BeamDirection(0, 0, 1);
+        const Double_t ScatteringAngle = BeamDirection.Angle(MomDirectionHCS);
+        eventdata.Data[kScatterAngle] = ScatteringAngle;
+        scatang += ScatteringAngle;
+
+        // calculate difference between dp_kin and dp
+        // dp_kin + kDpKinOffsets = dp
+        const Double_t DM = ExcitationEnergy[KineID];
+        const Double_t Ma = GroundNuclearMass;
+        const Double_t P0 = eventdata.Data[kurb_e];
+        const Double_t DpKinOffsets = (ScatMom(DM, Ma, P0, ScatteringAngle) - ScatMom(DM, Ma, P0, TMath::Abs(HRSAngle))) / eventdata.Data[kCentralp];
+        eventdata.Data[kDpKinOffsets] = DpKinOffsets;
+
+        dpkinoff += DpKinOffsets;
+        dpkinoff_rms += DpKinOffsets*DpKinOffsets;
+
+        // calculate kRealDpKin, should be same for same kine settings
+        eventdata.Data[kRadiLossDp] = RadiationLossByFoil[FoilID] / eventdata.Data[kCentralp];
+        eventdata.Data[kRealDpKin] = ScatMom(DM, Ma, P0, TMath::Abs(HRSAngle)) / eventdata.Data[kCentralp] - 1 - eventdata.Data[kRadiLossDp];
+
+        DEBUG_MASSINFO("PrepareDp", "ScatterMom = %f,\t Centralp = %f,\t radloss = %f,\t ebeam = %f", ScatMom(DM, Ma, P0, TMath::Abs(HRSAngle)), eventdata.Data[kCentralp], eventdata.Data[kRadiLossDp], P0);
+
+        eventdata.Data[kRealDpKinMatrix] = eventdata.Data[kRealDpKin] - x_tg / ExtTarCor_DeltaCorr;
+
+        exttargcorr_dp += x_tg / ExtTarCor_DeltaCorr;
+        rms_exttargcorr_dp += (x_tg / ExtTarCor_DeltaCorr)*(x_tg / ExtTarCor_DeltaCorr);
+
+        // calculate expected dp_kin for all other excitation states
+        for (UInt_t ExcitID = 0; ExcitID < NExcitationStates; ExcitID++) {
+            assert(kRealDpKinExcitations + ExcitID < kRealTh); //check array index size
+            eventdata.Data[kRealDpKinExcitations + ExcitID] = ScatMom(ExcitationEnergyList[ExcitID], Ma, P0, TMath::Abs(HRSAngle)) / eventdata.Data[kCentralp] - 1;
+        }
+
+        DEBUG_MASSINFO("PrepareDp", "ScatterAngle = %f,\t DpKinOffsets = %f", ScatteringAngle / TMath::Pi()*180, DpKinOffsets);
     }
 
-    DEBUG_INFO("VerifyMatrix_Dp", "(dp_Calc - dp in root tree) = d_dp = %f, rms_d_dp=%f", d_dp / fNRawData, TMath::Sqrt(rms_dp / fNRawData));
+    DEBUG_INFO("PrepareDp", "%d out of %d data is for calibration", fNCalibData, fNRawData);
+    DEBUG_INFO("PrepareDp", "Average : ScatteringAngle = %f", scatang / fNRawData / TMath::Pi()*180);
+    DEBUG_INFO("PrepareDp", "Average DpKinOffsets = %f, RMS DpKinOffsets = %f", dpkinoff / fNRawData, TMath::Sqrt(dpkinoff_rms / fNRawData));
+    DEBUG_INFO("PrepareDp", "Average Extended Target Corretion: dp = %f,\t rms_dp = %f", exttargcorr_dp / fNRawData, TMath::Sqrt(rms_exttargcorr_dp / fNRawData));
 
-    return TMath::Sqrt(rms_dp / fNRawData);
+    // make sure kCalcTh, kCalcPh is filled, although not necessary
+    SumSquareDTh();
+    SumSquareDPhi();
+    SumSquareDp();
+
+    DEBUG_INFO("PrepareDp", "Done!");
 }
 
 TCanvas * ROpticsOpt::CheckDp()
