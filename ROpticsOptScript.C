@@ -7,14 +7,14 @@
 #include "TString.h"
 #include "TVirtualFitter.h"
 
-//#include "LOpticsOpt.h"
+//#include "ROpticsOpt.h"
 //#include "SaveCanvas.C"
 
 using namespace std;
 
-class LOpticsOpt;
+class ROpticsOpt;
 
-LOpticsOpt * opt;
+ROpticsOpt * opt;
 UInt_t NPara = 0;
 Double_t OldMatrixArray[10000] = {-99}; //NPara
 Bool_t free[10000] = {kFALSE}; //NPara
@@ -249,7 +249,7 @@ void DoMinDp(TString SourceDataBase, TString DestDataBase, UInt_t MaxDataPerGrou
 
 void PlotDataBase(TString DatabaseFileName, UInt_t MaxDataPerGroup = 1000)
 {
-    opt = new LOpticsOpt();
+    opt = new ROpticsOpt();
 
     assert(opt);
 
@@ -275,9 +275,9 @@ void PlotDataBase(TString DatabaseFileName, UInt_t MaxDataPerGroup = 1000)
     delete opt;
 }
 
-void LOpticsOptScript(TString select, TString SourceDataBase, TString DestDataBase)
+void ROpticsOptScript(TString select, TString SourceDataBase, TString DestDataBase)
 {
-    opt = new LOpticsOpt();
+    opt = new ROpticsOpt();
 
     Int_t s = 0;
     if (select == "theta") s = 1;
