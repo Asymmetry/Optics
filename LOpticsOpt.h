@@ -123,18 +123,13 @@ public:
         kRealTgX, // real target x from survey, beam
         kRealTgY, // real target y from survey, beam
         kRealThMatrix, // expected target th before extended target corrections
+        kRealPhMatrix,
         kCalcTh, // calculated th from matrix
         kCalcPh, // calculated ph from matrix
         kSieveX,
         kSieveY,
         kSieveZ,
         kBeamZ
-    };
-
-    enum ExtraVertexIdx {
-        kRealReactZ = 14, //expected ReactZ
-        kCalcTgY, //calculated Tg_y
-        kCalcReactZ //calculated ReactZ
     };
 
     enum ExtraDpIdx {
@@ -158,24 +153,16 @@ public:
 
     void PrepareSieve(void);
     void PrepareSieveWithField(void);
-    TCanvas* CheckSieve(Int_t PlotFoilID = 0);
     Double_t SumSquareDTh(void);
     Double_t SumSquareDPhi(void);
-    Double_t SumSquareDBeamX(void);
-    Double_t SumSquareDBeamY(void);
-
-    Double_t fArbitaryVertexShift[100]; // compensate bias due to event selections, array of [FoilID]
-    void PrepareTgY(void);
-    void PrepareTgYWithField(void);
-    TCanvas* CheckTgY(void);
-    Double_t SumSquareDTgY();
+    TCanvas* CheckSieve(Int_t PlotKine = 0, UInt_t PlotFoilID = 0);
 
     Double_t fArbitaryDpKinShift[100]; // compensate bias due to dp event selections, array of [KineID]
     void PrepareDp(void);
     void PrepareDpWithField(void);
+    Double_t SumSquareDp(Bool_t IncludeExtraData = kFALSE);
     TCanvas* CheckDp(void);
     TCanvas* CheckDpGlobal(void);
-    Double_t SumSquareDp(Bool_t IncludeExtraData = kFALSE);
 
     TRotation fTCSInHCS; // transformations vector from TCS to HCS
     TVector3 fPointingOffset; // Optical point in lab coordinate system

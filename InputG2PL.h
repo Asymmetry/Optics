@@ -50,12 +50,12 @@ const UInt_t NKine = 5; //N Delta Scans
 
 #define DIPOLE_MAG2MOM(Mag) (2.702*(Mag)-1.6e-03*(Mag)*(Mag)*(Mag))
 const Double_t HRSCentralMom[] = {
-                                  DIPOLE_MAG2MOM((0.8580431 + 0.8580438) / 2.), // -3% run 3181 3182
-                                  DIPOLE_MAG2MOM((0.8472928 + 0.8472905) / 2.), // -2% run 3183 3184
-                                  DIPOLE_MAG2MOM((0.8328698 + 0.8328679) / 2.), //  0% run 3185 3186
-                                  DIPOLE_MAG2MOM((0.8162305 + 0.8162268) / 2.), //  2% run 3187 3188
-                                  DIPOLE_MAG2MOM((0.8077355 + 0.8077357) / 2.), //  3% run 3190 3191
-                                  0
+    DIPOLE_MAG2MOM((0.8580431 + 0.8580438) / 2.), // -3% run 3181 3182
+    DIPOLE_MAG2MOM((0.8472928 + 0.8472905) / 2.), // -2% run 3183 3184
+    DIPOLE_MAG2MOM((0.8328698 + 0.8328679) / 2.), //  0% run 3185 3186
+    DIPOLE_MAG2MOM((0.8162305 + 0.8162268) / 2.), //  2% run 3187 3188
+    DIPOLE_MAG2MOM((0.8077355 + 0.8077357) / 2.), //  3% run 3190 3191
+    0
 };
 
 const Double_t GroundNuclearMass = 12.0107 * .931494028; //GeV/c^2  //Carbon Target
@@ -84,8 +84,8 @@ const Double_t LossEachFoil = 0.501422e-3; // 40mil C12
 
 // Array of FoilID
 const Double_t RadiationLossByFoil[] = {
-                                        AllLossExceptFoil + LossEachFoil * 1,
-                                        0
+    AllLossExceptFoil + LossEachFoil * 1,
+    0
 };
 // Warning: these numbers are calculated with small angle approximation
 
@@ -93,6 +93,7 @@ const Double_t RadiationLossByFoil[] = {
 // Disable Extended Target Correction
 
 const Double_t ExtTarCor_ThetaCorr = 0;
+const Double_t ExtTarCor_PhiCorr = 0;
 const Double_t ExtTarCor_DeltaCorr = 1e36;
 
 /////////////////////////////////////////////////////////////////////////

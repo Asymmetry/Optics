@@ -88,7 +88,7 @@ THaTrackingDetector(name, description, apparatus)
     fNRawData = 0;
 
     for (UInt_t i = 0; i < 100; i++)
-        fArbitaryDpKinShift[i] = fArbitaryVertexShift[i] = 0;
+        fArbitaryDpKinShift[i] = 0;
 }
 
 LOpticsOpt::~LOpticsOpt()
@@ -512,10 +512,6 @@ void LOpticsOpt::Print(const Option_t* opt) const
     //        printf("\n");
     //    }
 
-    printf("fArbitaryVertexShift[%d] = {", NFoils);
-    for (UInt_t FoilID = 0; FoilID < NFoils; FoilID++)
-        printf("%f  ", fArbitaryVertexShift[FoilID]);
-    printf("}\n");
     printf("fArbitaryDpKinShift[%d] = {", NKine);
     for (UInt_t KineID = 0; KineID < NKine; KineID++)
         printf("%f  ", fArbitaryDpKinShift[KineID]);
@@ -704,6 +700,7 @@ void LOpticsOpt::PrepareSieve(void)
     // DEBUG_INFO("PrepareSieve","Entry Point");
 
     Double_t exttargcorr_th = 0, rms_exttargcorr_th = 0;
+    Double_t exttargcorr_ph = 0, rms_exttargcorr_ph = 0;
 
     for (UInt_t idx = 0; idx < fNRawData; idx++) {
         EventData &eventdata = fRawData[idx];
@@ -741,14 +738,18 @@ void LOpticsOpt::PrepareSieve(void)
         // fDeltaTh = fThetaCorr * x_tg;
         // Double_t theta = trkifo->GetTheta() + fDeltaTh;
         eventdata.Data[kRealThMatrix] = eventdata.Data[kRealTh] - x_tg * ExtTarCor_ThetaCorr;
+        eventdata.Data[kRealPhMatrix] = eventdata.Data[kRealPhi] - y_tg * ExtTarCor_PhiCorr;
 
         exttargcorr_th += x_tg * ExtTarCor_ThetaCorr;
         rms_exttargcorr_th += x_tg * ExtTarCor_ThetaCorr * x_tg * ExtTarCor_ThetaCorr;
+        exttargcorr_ph += x_tg * ExtTarCor_PhiCorr;
+        rms_exttargcorr_ph += x_tg * ExtTarCor_PhiCorr * y_tg * ExtTarCor_PhiCorr;
 
         DEBUG_MASSINFO("PrepareSieve", "Real_Th_Matrix = %f,\t Real_Phi = %f", eventdata.Data[kRealThMatrix], eventdata.Data[kRealPhi]);
     }
 
     DEBUG_INFO("PrepareSieve", "Average Extended Target Correction: th = %f,\t rms_th = %f", exttargcorr_th / fNRawData, TMath::Sqrt(rms_exttargcorr_th / fNRawData));
+    DEBUG_INFO("PrepareSieve", "Average Extended Target Correction: ph = %f,\t rms_ph = %f", exttargcorr_ph / fNRawData, TMath::Sqrt(rms_exttargcorr_ph / fNRawData));
 
     // Make sure kCalcTh, kCalcPh is filled
     SumSquareDTh();
@@ -764,6 +765,7 @@ void LOpticsOpt::PrepareSieveWithField(void)
     // DEBUG_INFO("PrepareSieve","Entry Point");
 
     Double_t exttargcorr_th = 0, rms_exttargcorr_th = 0;
+    Double_t exttargcorr_ph = 0, rms_exttargcorr_ph = 0;
 
     for (UInt_t idx = 0; idx < fNRawData; idx++) {
         EventData &eventdata = fRawData[idx];
@@ -797,9 +799,12 @@ void LOpticsOpt::PrepareSieveWithField(void)
         // fDeltaTh = fThetaCorr * x_tg;
         // Double_t theta = trkifo->GetTheta() + fDeltaTh;
         eventdata.Data[kRealThMatrix] = eventdata.Data[kRealTh] - x_tg * ExtTarCor_ThetaCorr;
+        eventdata.Data[kRealPhMatrix] = eventdata.Data[kRealPhi] - y_tg * ExtTarCor_PhiCorr;
 
         exttargcorr_th += x_tg * ExtTarCor_ThetaCorr;
         rms_exttargcorr_th += x_tg * ExtTarCor_ThetaCorr * x_tg * ExtTarCor_ThetaCorr;
+        exttargcorr_ph += x_tg * ExtTarCor_PhiCorr;
+        rms_exttargcorr_ph += x_tg * ExtTarCor_PhiCorr * y_tg * ExtTarCor_PhiCorr;
 
         DEBUG_MASSINFO("PrepareSieve", "Real_Th_Matrix = %f,\t Real_Phi = %f", eventdata.Data[kRealThMatrix], eventdata.Data[kRealPhi]);
     }
@@ -811,138 +816,6 @@ void LOpticsOpt::PrepareSieveWithField(void)
     SumSquareDPhi();
 
     DEBUG_INFO("PrepareSieve", "Done!");
-}
-
-TCanvas * LOpticsOpt::CheckSieve(Int_t PlotFoilID)
-{
-    // Visualize Sieve Plane
-    DEBUG_INFO("CheckSieve", "Entry Point");
-
-    const UInt_t nplot = (PlotFoilID == -1) ? NFoils : 1;
-
-    TH2D * HSievePlane[NFoils] = {0};
-    Double_t x_lim[NFoils] = {0};
-    Double_t y_lim[NFoils] = {0};
-
-    for (UInt_t idx = 0; idx < NFoils; idx++) {
-        x_lim[idx] = 1.3 * TMath::Max(TMath::Abs(SieveYbyCol[0]), TMath::Abs(SieveYbyCol[NSieveCol - 1]));
-        y_lim[idx] = 1.5 * TMath::Max(TMath::Abs(SieveXbyRow[0]), TMath::Abs(SieveXbyRow[NSieveRow - 1]));
-
-        HSievePlane[idx] = new TH2D(Form("Sieve_Foil%d", idx), Form("Sieve Plane Proj. (tg_X vs tg_Y) for Data set #%d", idx), 500, -x_lim[idx], x_lim[idx], 500, -y_lim[idx], y_lim[idx]);
-
-        HSievePlane[idx]->SetXTitle("Sieve H [m]");
-        HSievePlane[idx]->SetYTitle("Sieve V [m]");
-        assert(HSievePlane[idx]); // assure memory allocation
-    }
-
-    Double_t dX = 0, dY = 0;
-
-    enum {
-        kEventID, kRealSieveX, kRealSieveY, kCalcSieveX, kCalcSieveY
-    };
-
-    Double_t SieveEventID[NFoils][NSieveCol][NSieveRow][5] = {
-        {
-            {
-                {0}
-            }
-        }
-    };
-
-    for (UInt_t idx = 0; idx < fNRawData; idx++) {
-        const EventData &eventdata = fRawData[idx];
-
-        UInt_t res = (UInt_t) eventdata.Data[kCutID];
-        // const UInt_t KineID = res / (NSieveRow * NSieveCol * NFoils); //starting 0!
-        res = res % (NSieveRow * NSieveCol * NFoils);
-        const UInt_t FoilID = res / (NSieveRow * NSieveCol); //starting 0!
-        res = res % (NSieveRow * NSieveCol);
-        const UInt_t Col = res / (NSieveRow); //starting 0!
-        const UInt_t Row = res % (NSieveRow); //starting 0!
-
-        assert(FoilID < NFoils); //array index check
-
-        const TVector3 SieveHoleTCS = GetSieveHoleTCS(Col, Row);
-
-        Double_t ProjectionX = eventdata.Data[kRealTgX] + (eventdata.Data[kCalcTh] + eventdata.Data[kRealTgX] * ExtTarCor_ThetaCorr) * (SieveHoleTCS.Z());
-        Double_t ProjectionY = eventdata.Data[kRealTgY] + eventdata.Data[kCalcPh] * (SieveHoleTCS.Z());
-
-        HSievePlane[FoilID]->Fill(ProjectionY, ProjectionX);
-
-        dX += ProjectionX - SieveHoleTCS.X();
-        dY += ProjectionY - SieveHoleTCS.Y();
-
-        SieveEventID[FoilID][Col][Row][kEventID] = idx;
-        SieveEventID[FoilID][Col][Row][kRealSieveX] = SieveHoleTCS.X();
-        SieveEventID[FoilID][Col][Row][kRealSieveY] = SieveHoleTCS.Y();
-        SieveEventID[FoilID][Col][Row][kCalcSieveX] = ProjectionX;
-        SieveEventID[FoilID][Col][Row][kCalcSieveY] = ProjectionY;
-    }
-
-    DEBUG_INFO("CheckSieve", "Average : D_X = %f,\t D_Y = %f", dX / fNRawData, dY / fNRawData);
-
-    TCanvas * c1 = new TCanvas("SieveCheck", "SieveCheck", 1800, 1100);
-
-    if (nplot <= 1) {
-        c1 = new TCanvas("SieveCheck", "SieveCheck", 800, 1100);
-        c1->Divide(1, 1);
-    } else if (nplot <= 3) {
-        c1 = new TCanvas("SieveCheck", "SieveCheck", 1800, 1100);
-        c1->Divide(3, 1);
-    } else if (nplot <= 6) {
-        c1 = new TCanvas("SieveCheck", "SieveCheck", 1800, 1100);
-        c1->Divide(3, 2);
-    } else {
-        c1 = new TCanvas("SieveCheck", "SieveCheck", 1800, 1100);
-        c1->Divide(4, 2);
-    }
-
-    for (UInt_t idx = 0; idx < nplot; idx++) {
-        UInt_t FoilID = idx;
-        if (PlotFoilID >= 0)
-            FoilID = PlotFoilID;
-
-        c1->cd(idx + 1);
-        assert(HSievePlane[idx]); //pointer check
-
-        HSievePlane[idx]->Draw("COLZ");
-
-        // Draw Sieve
-        const Double_t plotwidth = 0.004;
-        for (UInt_t Row = 0; Row < NSieveRow; Row++) {
-            for (UInt_t Col = 0; Col < NSieveCol; Col++) {
-                const Double_t posx = SieveOffY + SieveYbyCol[Col];
-                const Double_t posy = SieveOffX + SieveXbyRow[Row];
-
-                TLine *lh = new TLine(posx - plotwidth, posy, posx + plotwidth, posy);
-                TLine *lv = new TLine(posx, posy - plotwidth, posx, posy + plotwidth);
-                lh -> SetLineColor(kBlack);
-                lv -> SetLineColor(kBlack);
-
-                lh -> Draw();
-                lv -> Draw();
-            }
-        }
-
-        // Draw arrows
-        for (UInt_t Col = 0; Col < NSieveCol; Col++) {
-            for (UInt_t Row = 0; Row < NSieveRow; Row++) {
-                if (SieveEventID[FoilID][Col][Row][kEventID] > 0) {
-                    assert(SieveEventID[FoilID][Col][Row][kEventID] < fNRawData); //array index bondary check
-                    TArrow * ar2 = new TArrow(SieveEventID[FoilID][Col][Row][kCalcSieveY], SieveEventID[FoilID][Col][Row][kCalcSieveX], SieveEventID[FoilID][Col][Row][kRealSieveY], SieveEventID[FoilID][Col][Row][kRealSieveX], 0.008, "|>");
-                    ar2->SetAngle(40);
-                    ar2->SetLineColor(kMagenta);
-                    ar2->SetFillColor(kMagenta);
-
-                    const Double_t ignorelimit = 0.005;
-                    if ((ar2->GetX1() - ar2->GetX2())*(ar2->GetX1() - ar2->GetX2())+(ar2->GetY1() - ar2->GetY2())*(ar2->GetY1() - ar2->GetY2()) > ignorelimit * ignorelimit)
-                        ar2->Draw();
-                }
-            }
-        }
-    }
-
-    return c1;
 }
 
 Double_t LOpticsOpt::SumSquareDTh()
@@ -983,8 +856,8 @@ Double_t LOpticsOpt::SumSquareDTh()
         eventdata.Data[kCalcTh] = theta;
     }
 
-    // DEBUG_INFO("SumSquareDTh", "#%d : dth = %f,\t rmsth = %f", NCall, dth / fNRawData, TMath::Sqrt(rmsth / fNRawData));
-    printf("SumSquareDTh: #%d : dth = %f,\t rmsth = %f\n", NCall, dth / fNRawData, TMath::Sqrt(rmsth / fNRawData));
+    DEBUG_INFO("SumSquareDTh", "#%d : dth = %f,\t rmsth = %f", NCall, dth / fNRawData, TMath::Sqrt(rmsth / fNRawData));
+    //printf("SumSquareDTh: #%d : dth = %f,\t rmsth = %f\n", NCall, dth / fNRawData, TMath::Sqrt(rmsth / fNRawData));
 
     return rmsth;
 }
@@ -1018,340 +891,152 @@ Double_t LOpticsOpt::SumSquareDPhi()
         // calculate the coordinates at the target
         phi = CalcTargetVar(fPMatrixElems, powers) + CalcTargetVar(fPTAMatrixElems, powers);
 
-        dphi += phi - eventdata.Data[kRealPhi];
-        rmsphi += (phi - eventdata.Data[kRealPhi])*(phi - eventdata.Data[kRealPhi]);
+        dphi += phi - eventdata.Data[kRealPhMatrix];
+        rmsphi += (phi - eventdata.Data[kRealPhMatrix])*(phi - eventdata.Data[kRealPhMatrix]);
 
-        DEBUG_MASSINFO("SumSquareDPhi", "D_Phi = %f = \t%f - \t%f", phi - eventdata.Data[kRealPhi], phi, eventdata.Data[kRealPhi]);
+        DEBUG_MASSINFO("SumSquareDPhi", "D_Phi = %f = \t%f - \t%f", phi - eventdata.Data[kRealPhMatrix], phi, eventdata.Data[kRealPhMatrix]);
 
         //save the results
         eventdata.Data[kCalcPh] = phi;
     }
 
-    // DEBUG_INFO("SumSquareDPhi", "#%d : dphi = %f,\t rmsphi = %f", NCall, dphi / fNRawData, TMath::Sqrt(rmsphi / fNRawData));
-    printf("SumSquareDPhi: #%d : dphi = %f,\t rmsphi = %f\n", NCall, dphi / fNRawData, TMath::Sqrt(rmsphi / fNRawData));
+    DEBUG_INFO("SumSquareDPhi", "#%d : dphi = %f,\t rmsphi = %f", NCall, dphi / fNRawData, TMath::Sqrt(rmsphi / fNRawData));
+    //printf("SumSquareDPhi: #%d : dphi = %f,\t rmsphi = %f\n", NCall, dphi / fNRawData, TMath::Sqrt(rmsphi / fNRawData));
 
     return rmsphi;
 }
 
-Double_t LOpticsOpt::SumSquareDBeamX(void)
+TCanvas * LOpticsOpt::CheckSieve(Int_t PlotKine, UInt_t PlotFoilID)
 {
-    //return standard deviation of projected beam_x
+    // Visualize Sieve Plane
+    DEBUG_INFO("CheckSieve", "Entry Point");
 
-    Double_t sumxlab[NFoils] = {0};
-    Double_t sumxlab2[NFoils] = {0};
-    Double_t nxlab[NFoils] = {0};
+    const UInt_t nplot = (PlotKine != 0) ? NKine : 1;
 
-    static UInt_t NCall = 0;
-    NCall++;
+    TH2D * HSievePlane[NKine] = {0};
+    Double_t x_lim[NKine] = {0};
+    Double_t y_lim[NKine] = {0};
 
-    Double_t phi, xlab;
+    for (UInt_t idx = 0; idx < NKine; idx++) {
+        x_lim[idx] = 1.3 * TMath::Max(TMath::Abs(SieveYbyCol[0]), TMath::Abs(SieveYbyCol[NSieveCol - 1]));
+        y_lim[idx] = 1.5 * TMath::Max(TMath::Abs(SieveXbyRow[0]), TMath::Abs(SieveXbyRow[NSieveRow - 1]));
 
-    for (UInt_t idx = 0; idx < fNRawData; idx++) {
-        EventData &eventdata = fRawData[idx];
+        HSievePlane[idx] = new TH2D(Form("Sieve_Kine%d", idx), Form("Sieve Plane Proj. (tg_X vs tg_Y) for Data set #%d", idx), 500, -x_lim[idx], x_lim[idx], 500, -y_lim[idx], y_lim[idx]);
 
-        UInt_t res = (UInt_t) eventdata.Data[kCutID];
-        res = res % (NSieveRow * NSieveCol * NFoils);
-        const UInt_t FoilID = res / (NSieveRow * NSieveCol); //starting 0!
-
-        Double_t x_fp = eventdata.Data[kX];
-        const Double_t(*powers)[5] = eventdata.powers;
-
-        // calculate the matrices we need
-        // CalcMatrix(x_fp, fDMatrixElems);
-        // CalcMatrix(x_fp, fTMatrixElems);
-        // CalcMatrix(x_fp, fYMatrixElems);
-        // CalcMatrix(x_fp, fYTAMatrixElems);
-        CalcMatrix(x_fp, fPMatrixElems);
-        CalcMatrix(x_fp, fPTAMatrixElems);
-
-        // calculate the coordinates at the target
-        phi = CalcTargetVar(fPMatrixElems, powers) + CalcTargetVar(fPTAMatrixElems, powers);
-
-        TVector3 SieveHoleTCS(eventdata.Data[kSieveX], eventdata.Data[kSieveY], eventdata.Data[kSieveZ]);
-        TVector3 SieveHoleHCS = fTCSInHCS*SieveHoleTCS;
-        Double_t slope = TMath::Tan(TMath::ATan(phi) + HRSAngle);
-        xlab = SieveHoleHCS.X() + slope * (eventdata.Data[kBeamZ] - SieveHoleHCS.Z());
-        eventdata.Data[kBeamX] = xlab;
-
-        sumxlab[FoilID] += xlab;
-        if (TMath::Abs(xlab) > 20e-3) sumxlab2[FoilID] += 1000; // Cheating here. The fit may go out the target range. Use this to limit the fitting range.
-        sumxlab2[FoilID] += xlab*xlab;
-        nxlab[FoilID] += 1;
+        HSievePlane[idx]->SetXTitle("Sieve H [m]");
+        HSievePlane[idx]->SetYTitle("Sieve V [m]");
+        assert(HSievePlane[idx]); // assure memory allocation
     }
 
-    Double_t rmsxlab = 0;
+    Double_t dX = 0, dY = 0;
 
-    for (UInt_t i = 0; i < NFoils; i++)
-        if (nxlab[i] > 0) {
-            Double_t sum = sumxlab[i];
-            Double_t sum2 = sumxlab2[i];
-            Double_t n = nxlab[i];
-            Double_t rms = TMath::Sqrt(sum2 / n - (sum / n)*(sum / n));
-            rmsxlab += rms;
-            printf("SumSquareDBeamX: #%d : xlab(%d) = %f,\t rmsxlab(%d) = %f\n", NCall, i, sum / n, i, rms);
+    enum {
+        kEventID, kRealSieveX, kRealSieveY, kCalcSieveX, kCalcSieveY
+    };
+
+    Double_t SieveEventID[NKine][NSieveCol][NSieveRow][5] = {
+        {
+            {
+                {0}
+            }
         }
-
-    return rmsxlab;
-}
-
-Double_t LOpticsOpt::SumSquareDBeamY(void)
-{
-    // return standard deviation of projected beam_y
-
-    Double_t sumylab[NFoils] = {0};
-    Double_t sumylab2[NFoils] = {0};
-    Double_t nylab[NFoils] = {0};
-
-    static UInt_t NCall = 0;
-    NCall++;
-
-    Double_t theta, phi, ztr, ylab;
+    };
 
     for (UInt_t idx = 0; idx < fNRawData; idx++) {
-        EventData &eventdata = fRawData[idx];
+        const EventData &eventdata = fRawData[idx];
 
         UInt_t res = (UInt_t) eventdata.Data[kCutID];
-        res = res % (NSieveRow * NSieveCol * NFoils);
-        const UInt_t FoilID = res / (NSieveRow * NSieveCol); //starting 0!
-
-        Double_t x_fp = eventdata.Data[kX];
-        const Double_t(*powers)[5] = eventdata.powers;
-
-        // calculate the matrices we need
-        // CalcMatrix(x_fp, fDMatrixElems);
-        CalcMatrix(x_fp, fTMatrixElems);
-        // CalcMatrix(x_fp, fYMatrixElems);
-        // CalcMatrix(x_fp, fYTAMatrixElems);
-        CalcMatrix(x_fp, fPMatrixElems);
-        CalcMatrix(x_fp, fPTAMatrixElems);
-
-        // calculate the coordinates at the target
-        theta = CalcTargetVar(fTMatrixElems, powers);
-        phi = CalcTargetVar(fPMatrixElems, powers) + CalcTargetVar(fPTAMatrixElems, powers);
-
-        TVector3 SieveHoleTCS(eventdata.Data[kSieveX], eventdata.Data[kSieveY], eventdata.Data[kSieveZ]);
-        TVector3 SieveHoleHCS = fTCSInHCS*SieveHoleTCS;
-        ztr = (eventdata.Data[kBeamZ] - SieveHoleHCS.Z()) / TMath::Cos(TMath::ATan(phi) + HRSAngle);
-        ylab = -(eventdata.Data[kSieveX] + theta * ztr);
-        eventdata.Data[kBeamY] = ylab;
-
-        sumylab[FoilID] += ylab;
-        if (TMath::Abs(ylab) > 20e-3) sumylab2[FoilID] += 1000; // Cheating here. The fit may go out the target range. Use this to limit the fitting range.
-        sumylab2[FoilID] += ylab*ylab;
-        nylab[FoilID] += 1;
-    }
-
-    Double_t rmsylab = 0;
-
-    for (UInt_t i = 0; i < NFoils; i++)
-        if (nylab[i] > 0) {
-            Double_t sum = sumylab[i];
-            Double_t sum2 = sumylab2[i];
-            Double_t n = nylab[i];
-            Double_t rms = TMath::Sqrt(sum2 / n - (sum / n)*(sum / n));
-            rmsylab += rms;
-            printf("SumSquareDBeamY: #%d : ylab(%d) = %f,\t rmsylab(%d) = %f\n", NCall, i, sum / n, i, rms);
-        }
-
-    return rmsylab;
-}
-
-void LOpticsOpt::PrepareTgY(void)
-{
-    // calculate kRealTgY
-
-    for (UInt_t idx = 0; idx < fNRawData; idx++) {
-        EventData &eventdata = fRawData[idx];
-
-        UInt_t res = (UInt_t) eventdata.Data[kCutID];
-        // const UInt_t KineID = res / (NSieveRow * NSieveCol * NFoils); //starting 0!
+        UInt_t KineID = res / (NSieveRow * NSieveCol * NFoils); //starting 0!
         res = res % (NSieveRow * NSieveCol * NFoils);
         const UInt_t FoilID = res / (NSieveRow * NSieveCol); //starting 0!
         res = res % (NSieveRow * NSieveCol);
         const UInt_t Col = res / (NSieveRow); //starting 0!
         const UInt_t Row = res % (NSieveRow); //starting 0!
 
-        assert(FoilID < NFoils); //check array index size
+        assert(KineID < NKine); //array index check
 
-        TVector3 BeamSpotHCS(eventdata.Data[kBeamX], eventdata.Data[kBeamY], targetfoils[FoilID]);
-        TVector3 BeamSpotTCS = fTCSInHCS.Inverse()*(BeamSpotHCS - fPointingOffset);
+        if (FoilID != PlotFoilID) continue;
+        if (PlotKine == 0) KineID = 0;
 
         const TVector3 SieveHoleTCS = GetSieveHoleTCS(Col, Row);
-        const TVector3 MomDirectionTCS = SieveHoleTCS - BeamSpotTCS;
 
-        Double_t Real_Tg_Phi = MomDirectionTCS.Y() / MomDirectionTCS.Z();
+        Double_t ProjectionX = eventdata.Data[kRealTgX] + (eventdata.Data[kCalcTh] + eventdata.Data[kRealTgX] * ExtTarCor_ThetaCorr) * (SieveHoleTCS.Z());
+        Double_t ProjectionY = eventdata.Data[kRealTgY] + (eventdata.Data[kCalcPh] + eventdata.Data[kRealTgY] * ExtTarCor_PhiCorr) * (SieveHoleTCS.Z());
 
-        Double_t Real_Tg_Y = BeamSpotTCS.Y() + Real_Tg_Phi * (0 - BeamSpotTCS.Z());
+        HSievePlane[KineID]->Fill(ProjectionY, ProjectionX);
 
-        eventdata.Data[kRealTgY] = Real_Tg_Y;
-        eventdata.Data[kRealReactZ] = targetfoils[FoilID];
+        dX += ProjectionX - SieveHoleTCS.X();
+        dY += ProjectionY - SieveHoleTCS.Y();
 
-        DEBUG_MASSINFO("PrepareVertex", "Real_Tg_Y = %f,\t Real_ReactZ = %f", Real_Tg_Y, eventdata.Data[kRealReactZ]);
+        SieveEventID[KineID][Col][Row][kEventID] = idx;
+        SieveEventID[KineID][Col][Row][kRealSieveX] = SieveHoleTCS.X();
+        SieveEventID[KineID][Col][Row][kRealSieveY] = SieveHoleTCS.Y();
+        SieveEventID[KineID][Col][Row][kCalcSieveX] = ProjectionX;
+        SieveEventID[KineID][Col][Row][kCalcSieveY] = ProjectionY;
     }
 
-    // make sure kCalcTh, kCalcPh is filled
-    SumSquareDTgY();
+    DEBUG_INFO("CheckSieve", "Average : D_X = %f,\t D_Y = %f", dX / fNRawData, dY / fNRawData);
 
-    DEBUG_INFO("PrepareVertex", "Done!");
-}
+    TCanvas * c1 = new TCanvas("SieveCheck", "SieveCheck", 1800, 1100);
 
-void LOpticsOpt::PrepareTgYWithField(void)
-{
-    // calculate kRealTgY
-
-    for (UInt_t idx = 0; idx < fNRawData; idx++) {
-        EventData &eventdata = fRawData[idx];
-
-        UInt_t res = (UInt_t) eventdata.Data[kCutID];
-        // const UInt_t KineID = res / (NSieveRow * NSieveCol * NFoils); //starting 0!
-        res = res % (NSieveRow * NSieveCol * NFoils);
-        const UInt_t FoilID = res / (NSieveRow * NSieveCol); //starting 0!
-
-        assert(FoilID < NFoils); //check array index size
-
-        eventdata.Data[kRealTgY] = eventdata.Data[kSimY];
-        eventdata.Data[kRealReactZ] = targetfoils[FoilID];
-
-        DEBUG_MASSINFO("PrepareVertex", "Real_Tg_Y = %f,\t Real_ReactZ = %f", eventdata.Data[kRealTgY], eventdata.Data[kRealReactZ]);
-    }
-
-    // make sure kCalcTh, kCalcPh is filled
-    SumSquareDTgY();
-
-    DEBUG_INFO("PrepareVertex", "Done!");
-}
-
-TCanvas * LOpticsOpt::CheckTgY()
-{
-    // Visualize TgY spectrum
-
-    DEBUG_INFO("CheckTgY", "Entry Point");
-
-    const UInt_t nplot = NFoils;
-    TH1D * HTgY[NFoils] = {0};
-    TH1D * HTgYReal[NFoils] = {0};
-    const Double_t YRange = 10e-3;
-
-    for (UInt_t idx = 0; idx < NFoils; idx++) {
-        HTgY[idx] = new TH1D(Form("Target_Y%d", idx), Form("Target Y for Data set #%d", idx), 400, -YRange, YRange);
-        HTgYReal[idx] = new TH1D(Form("Target_Y%d", idx), Form("Target Y for Data set #%d", idx), 400, -YRange, YRange);
-
-        HTgY[idx]->SetXTitle("Target Y [m]");
-        assert(HTgY[idx]); // assure memory allocation
-    }
-
-    Double_t dtg_y = 0;
-    Double_t dtg_y_rms = 0;
-
-    for (UInt_t idx = 0; idx < fNRawData; idx++) {
-        EventData &eventdata = fRawData[idx];
-
-        UInt_t res = (UInt_t) eventdata.Data[kCutID];
-        // const UInt_t KineID = res / (NSieveRow * NSieveCol * NFoils); //starting 0!
-        res = res % (NSieveRow * NSieveCol * NFoils);
-        const UInt_t FoilID = res / (NSieveRow * NSieveCol); //starting 0!
-
-        HTgY[FoilID]->Fill(eventdata.Data[kCalcTgY]);
-        HTgYReal[FoilID]->Fill(eventdata.Data[kRealTgY]);
-
-        dtg_y += eventdata.Data[kCalcTgY] - eventdata.Data[kRealTgY];
-        dtg_y_rms += (eventdata.Data[kCalcTgY] - eventdata.Data[kRealTgY])*(eventdata.Data[kCalcTgY] - eventdata.Data[kRealTgY]);
-    }
-
-    DEBUG_INFO("CheckTgY", "dtg_v = %f,\t dtg_v_rms = %f", dtg_y / fNRawData, dtg_y_rms / fNRawData);
-
-    TCanvas * c1;
-    if (nplot <= 3) {
-        c1 = new TCanvas("CheckTgY", "Target Y Check", 1800, 450);
+    if (nplot <= 1) {
+        c1 = new TCanvas("SieveCheck", "SieveCheck", 800, 1100);
+        c1->Divide(1, 1);
+    } else if (nplot <= 3) {
+        c1 = new TCanvas("SieveCheck", "SieveCheck", 1800, 1100);
         c1->Divide(3, 1);
     } else if (nplot <= 6) {
-        c1 = new TCanvas("CheckTgY", "Target Y Check", 1800, 900);
+        c1 = new TCanvas("SieveCheck", "SieveCheck", 1800, 1100);
         c1->Divide(3, 2);
     } else {
-        c1 = new TCanvas("CheckTgY", "Target Y Check", 1800, 1350);
-        c1->Divide(3, 3);
+        c1 = new TCanvas("SieveCheck", "SieveCheck", 1800, 1100);
+        c1->Divide(4, 2);
     }
 
-    Double_t MaxPlot = 20000.0;
     for (UInt_t idx = 0; idx < nplot; idx++) {
-        // UInt_t FoilID = idx;
+        UInt_t KineID = idx;
 
         c1->cd(idx + 1);
-        assert(HTgY[idx]);
 
-        HTgY[idx]->Draw();
+        assert(HSievePlane[idx]); //pointer check
+        HSievePlane[idx]->Draw("COLZ");
 
-        Double_t mean = HTgYReal[idx]->GetMean();
-        TLine *l = new TLine(mean, 0, mean, MaxPlot);
-        l->SetLineColor(kRed);
-        l->SetLineWidth(2);
-        l->Draw();
+        // Draw Sieve
+        const Double_t plotwidth = 0.004;
+        for (UInt_t Row = 0; Row < NSieveRow; Row++) {
+            for (UInt_t Col = 0; Col < NSieveCol; Col++) {
+                const Double_t posx = SieveOffY + SieveYbyCol[Col];
+                const Double_t posy = SieveOffX + SieveXbyRow[Row];
 
-        Double_t DefResolution = 0.5e-3;
-        Double_t FitRangeMultiply = 5;
+                TLine *lh = new TLine(posx - plotwidth, posy, posx + plotwidth, posy);
+                TLine *lv = new TLine(posx, posy - plotwidth, posx, posy + plotwidth);
+                lh -> SetLineColor(kBlack);
+                lv -> SetLineColor(kBlack);
 
-        TString FitFunc = Form("YtPeak%d", idx);
-        TF1 *f = new TF1(FitFunc, "gaus+[3]", mean - DefResolution*FitRangeMultiply, mean + DefResolution * FitRangeMultiply);
-        f->SetParameter(1, mean);
-        f->SetParameter(2, DefResolution);
-        HTgY[idx] -> Fit(FitFunc, "RN0");
-        f->SetLineColor(2);
-        f->Draw("SAME");
+                lh -> Draw();
+                lv -> Draw();
+            }
+        }
 
-        TLatex *t = new TLatex(f->GetParameter(1) + DefResolution, f->GetParameter(0) + f->GetParameter(3), Form("\\Delta \\pm \\sigma = (%2.1f \\pm %2.1f) mm", 1000 * (f->GetParameter(1) - mean), 1000 * (f->GetParameter(2))));
-        t->SetTextSize(0.05);
-        t->SetTextAlign(12);
-        t->SetTextColor(2);
-        t->Draw();
+        // Draw arrows
+        for (UInt_t Col = 0; Col < NSieveCol; Col++) {
+            for (UInt_t Row = 0; Row < NSieveRow; Row++) {
+                if (SieveEventID[KineID][Col][Row][kEventID] > 0) {
+                    assert(SieveEventID[KineID][Col][Row][kEventID] < fNRawData); //array index bondary check
+                    TArrow * ar2 = new TArrow(SieveEventID[KineID][Col][Row][kCalcSieveY], SieveEventID[KineID][Col][Row][kCalcSieveX], SieveEventID[KineID][Col][Row][kRealSieveY], SieveEventID[KineID][Col][Row][kRealSieveX], 0.008, "|>");
+                    ar2->SetAngle(40);
+                    ar2->SetLineColor(kMagenta);
+                    ar2->SetFillColor(kMagenta);
+
+                    const Double_t ignorelimit = 0.005;
+                    if ((ar2->GetX1() - ar2->GetX2())*(ar2->GetX1() - ar2->GetX2())+(ar2->GetY1() - ar2->GetY2())*(ar2->GetY1() - ar2->GetY2()) > ignorelimit * ignorelimit)
+                        ar2->Draw();
+                }
+            }
+        }
     }
 
     return c1;
-}
-
-Double_t LOpticsOpt::SumSquareDTgY(void)
-{
-    // return square sum of diff between calculated tg_y and expected tg_y
-
-    Double_t dtg_y = 0; //Difference
-    Double_t dtg_y_rms = 0; //mean square
-
-    static UInt_t NCall = 0;
-    NCall++;
-
-    Double_t tg_y;
-
-    for (UInt_t idx = 0; idx < fNRawData; idx++) {
-        EventData &eventdata = fRawData[idx];
-
-        Double_t x_fp = eventdata.Data[kX];
-        const Double_t(*powers)[5] = eventdata.powers;
-
-        // calculate the matrices we need
-        // CalcMatrix(x_fp, fDMatrixElems);
-        // CalcMatrix(x_fp, fTMatrixElems);
-        CalcMatrix(x_fp, fYMatrixElems);
-        CalcMatrix(x_fp, fYTAMatrixElems);
-        // CalcMatrix(x_fp, fPMatrixElems);
-        // CalcMatrix(x_fp, fPTAMatrixElems);
-
-        // calculate the coordinates at the target
-        tg_y = CalcTargetVar(fYMatrixElems, powers) + CalcTargetVar(fYTAMatrixElems, powers);
-
-        const UInt_t FoilID = (UInt_t) eventdata.Data[kCutID];
-
-        const Double_t ArbitaryVertexShift = fArbitaryVertexShift[FoilID] * (-TMath::Sin(HRSAngle));
-
-        dtg_y += tg_y - eventdata.Data[kRealTgY] + ArbitaryVertexShift;
-        dtg_y_rms += (tg_y - eventdata.Data[kRealTgY] + ArbitaryVertexShift)*(tg_y - eventdata.Data[kRealTgY] + ArbitaryVertexShift);
-
-        // save the results
-        eventdata.Data[kCalcTgY] = tg_y;
-    }
-
-    //DEBUG_INFO("SumSquareDTgY", "#%d : dtg_y = %f, dtg_y_rms = %f", NCall, dtg_y / fNRawData, TMath::Sqrt(dtg_y_rms / fNRawData));
-    printf("SumSquareDTgY: #%d : dtg_y = %f, dtg_y_rms = %f\n", NCall, dtg_y / fNRawData, TMath::Sqrt(dtg_y_rms / fNRawData));
-
-    return dtg_y_rms;
 }
 
 void LOpticsOpt::PrepareDp(void)
@@ -1867,8 +1552,8 @@ Double_t LOpticsOpt::SumSquareDp(Bool_t IncludeExtraData)
     if (!IncludeExtraData)
         assert(fNCalibData == NCalibData); // check number of event for calibration
 
-    // DEBUG_INFO("SumSquareDp", "#%d : d_dp = %f, rms_dp = %f", NCall, d_dp / NCalibData, TMath::Sqrt(rms_dp / NCalibData));
-    printf("SumSquareDp: #%d : d_dp = %f, rms_dp = %f\n", NCall, d_dp / NCalibData, TMath::Sqrt(rms_dp / NCalibData));
+    DEBUG_INFO("SumSquareDp", "#%d : d_dp = %f, rms_dp = %f", NCall, d_dp / NCalibData, TMath::Sqrt(rms_dp / NCalibData));
+    //printf("SumSquareDp: #%d : d_dp = %f, rms_dp = %f\n", NCall, d_dp / NCalibData, TMath::Sqrt(rms_dp / NCalibData));
 
     return rms_dp;
 }
