@@ -737,13 +737,15 @@ void LOpticsOpt::PrepareSieve(void)
         // Expected th ph before ext. target correction
         // fDeltaTh = fThetaCorr * x_tg;
         // Double_t theta = trkifo->GetTheta() + fDeltaTh;
-        eventdata.Data[kRealThMatrix] = eventdata.Data[kRealTh] - x_tg * ExtTarCor_ThetaCorr;
-        eventdata.Data[kRealPhMatrix] = eventdata.Data[kRealPhi] - y_tg * ExtTarCor_PhiCorr;
+        Double_t x_tg_off = x_tg - ExtTarCor_ThetaOff;
+        Double_t y_tg_off = y_tg - ExtTarCor_PhiOff;
+        eventdata.Data[kRealThMatrix] = eventdata.Data[kRealTh] - x_tg_off * ExtTarCor_ThetaCorr;
+        eventdata.Data[kRealPhMatrix] = eventdata.Data[kRealPhi] - y_tg_off * ExtTarCor_PhiCorr;
 
-        exttargcorr_th += x_tg * ExtTarCor_ThetaCorr;
-        rms_exttargcorr_th += x_tg * ExtTarCor_ThetaCorr * x_tg * ExtTarCor_ThetaCorr;
-        exttargcorr_ph += x_tg * ExtTarCor_PhiCorr;
-        rms_exttargcorr_ph += x_tg * ExtTarCor_PhiCorr * y_tg * ExtTarCor_PhiCorr;
+        exttargcorr_th += x_tg_off * ExtTarCor_ThetaCorr;
+        rms_exttargcorr_th += x_tg_off * ExtTarCor_ThetaCorr * x_tg_off * ExtTarCor_ThetaCorr;
+        exttargcorr_ph += y_tg_off * ExtTarCor_PhiCorr;
+        rms_exttargcorr_ph += y_tg_off * ExtTarCor_PhiCorr * y_tg_off * ExtTarCor_PhiCorr;
 
         DEBUG_MASSINFO("PrepareSieve", "Real_Th_Matrix = %f,\t Real_Phi = %f", eventdata.Data[kRealThMatrix], eventdata.Data[kRealPhi]);
     }
@@ -798,13 +800,15 @@ void LOpticsOpt::PrepareSieveWithField(void)
         // Expected th ph before ext. target correction
         // fDeltaTh = fThetaCorr * x_tg;
         // Double_t theta = trkifo->GetTheta() + fDeltaTh;
-        eventdata.Data[kRealThMatrix] = eventdata.Data[kRealTh] - x_tg * ExtTarCor_ThetaCorr;
-        eventdata.Data[kRealPhMatrix] = eventdata.Data[kRealPhi] - y_tg * ExtTarCor_PhiCorr;
+        Double_t x_tg_off = x_tg - ExtTarCor_ThetaOff;
+        Double_t y_tg_off = y_tg - ExtTarCor_PhiOff;
+        eventdata.Data[kRealThMatrix] = eventdata.Data[kRealTh] - x_tg_off * ExtTarCor_ThetaCorr;
+        eventdata.Data[kRealPhMatrix] = eventdata.Data[kRealPhi] - y_tg_off * ExtTarCor_PhiCorr;
 
-        exttargcorr_th += x_tg * ExtTarCor_ThetaCorr;
-        rms_exttargcorr_th += x_tg * ExtTarCor_ThetaCorr * x_tg * ExtTarCor_ThetaCorr;
-        exttargcorr_ph += x_tg * ExtTarCor_PhiCorr;
-        rms_exttargcorr_ph += x_tg * ExtTarCor_PhiCorr * y_tg * ExtTarCor_PhiCorr;
+        exttargcorr_th += x_tg_off * ExtTarCor_ThetaCorr;
+        rms_exttargcorr_th += x_tg_off * ExtTarCor_ThetaCorr * x_tg_off * ExtTarCor_ThetaCorr;
+        exttargcorr_ph += y_tg_off * ExtTarCor_PhiCorr;
+        rms_exttargcorr_ph += y_tg_off * ExtTarCor_PhiCorr * y_tg_off * ExtTarCor_PhiCorr;
 
         DEBUG_MASSINFO("PrepareSieve", "Real_Th_Matrix = %f,\t Real_Phi = %f", eventdata.Data[kRealThMatrix], eventdata.Data[kRealPhi]);
     }
@@ -960,8 +964,12 @@ TCanvas * LOpticsOpt::CheckSieve(Int_t PlotKine, UInt_t PlotFoilID)
 
         const TVector3 SieveHoleTCS = GetSieveHoleTCS(Col, Row);
 
-        Double_t ProjectionX = eventdata.Data[kRealTgX] + (eventdata.Data[kCalcTh] + eventdata.Data[kRealTgX] * ExtTarCor_ThetaCorr) * (SieveHoleTCS.Z());
-        Double_t ProjectionY = eventdata.Data[kRealTgY] + (eventdata.Data[kCalcPh] + eventdata.Data[kRealTgY] * ExtTarCor_PhiCorr) * (SieveHoleTCS.Z());
+        //Double_t ProjectionX = eventdata.Data[kRealTgX] + (eventdata.Data[kCalcTh] + eventdata.Data[kRealTgX] * ExtTarCor_ThetaCorr) * (SieveHoleTCS.Z());
+        //Double_t ProjectionY = eventdata.Data[kRealTgY] + (eventdata.Data[kCalcPh] + eventdata.Data[kRealTgY] * ExtTarCor_PhiCorr) * (SieveHoleTCS.Z());
+        Double_t ProjectionX = eventdata.Data[kRealTgX] + (eventdata.Data[kCalcTh] + (eventdata.Data[kRealTgX] - ExtTarCor_ThetaOff) * ExtTarCor_ThetaCorr) * (SieveHoleTCS.Z());
+        Double_t ProjectionY = eventdata.Data[kRealTgY] + (eventdata.Data[kCalcPh] + (eventdata.Data[kRealTgY] - ExtTarCor_PhiOff) * ExtTarCor_ThetaCorr) * (SieveHoleTCS.Z());
+        //Double_t ProjectionX = eventdata.Data[kRealTgX] + (eventdata.Data[kCalcTh]) * (SieveHoleTCS.Z());
+        //Double_t ProjectionY = eventdata.Data[kRealTgY] + (eventdata.Data[kCalcPh]) * (SieveHoleTCS.Z());
 
         HSievePlane[KineID]->Fill(ProjectionY, ProjectionX);
 
@@ -1131,10 +1139,11 @@ void LOpticsOpt::PrepareDp(void)
 
         DEBUG_MASSINFO("PrepareDp", "ScatterMom = %f,\t Centralp = %f,\t radloss = %f,\t ebeam = %f", ScatMom(DM, Ma, P0, TMath::Abs(HRSAngle)), eventdata.Data[kCentralp], eventdata.Data[kRadiLossDp], P0);
 
-        eventdata.Data[kRealDpKinMatrix] = eventdata.Data[kRealDpKin] - x_tg / ExtTarCor_DeltaCorr;
+        Double_t x_tg_off = x_tg - ExtTarCor_DeltaOff;
+        eventdata.Data[kRealDpKinMatrix] = eventdata.Data[kRealDpKin] - x_tg_off / ExtTarCor_DeltaCorr;
 
-        exttargcorr_dp += x_tg / ExtTarCor_DeltaCorr;
-        rms_exttargcorr_dp += (x_tg / ExtTarCor_DeltaCorr)*(x_tg / ExtTarCor_DeltaCorr);
+        exttargcorr_dp += x_tg_off / ExtTarCor_DeltaCorr;
+        rms_exttargcorr_dp += (x_tg_off / ExtTarCor_DeltaCorr)*(x_tg_off / ExtTarCor_DeltaCorr);
 
         // calculate expected dp_kin for all other excitation states
         for (UInt_t ExcitID = 0; ExcitID < NExcitationStates; ExcitID++) {
@@ -1194,6 +1203,8 @@ void LOpticsOpt::PrepareDpWithField(void)
         res = res % (NSieveRow * NSieveCol * NFoils);
         const UInt_t FoilID = res / (NSieveRow * NSieveCol); //starting 0!
         res = res % (NSieveRow * NSieveCol);
+        //const UInt_t Col = res / (NSieveRow); //starting 0!
+        //const UInt_t Row = res % (NSieveRow); //starting 0!
         assert(ExtraDataFlag < 2); //Check flag range. beyond 2 is not used
         assert(KineID < NKine); //check array index size
         assert(FoilID < NFoils); //check array index size
@@ -1218,7 +1229,7 @@ void LOpticsOpt::PrepareDpWithField(void)
         TVector3 MomDirectionTCS(eventdata.Data[kRealTh], eventdata.Data[kRealPhi], 1);
 
         TVector3 MomDirectionHCS = fTCSInHCS*MomDirectionTCS;
-        TVector3 BeamDirection(0, 0, 1);
+        TVector3 BeamDirection(0, TMath::Tan(TiltAngle[KineID * NFoils + FoilID]), 1);
         const Double_t ScatteringAngle = BeamDirection.Angle(MomDirectionHCS);
         eventdata.Data[kScatterAngle] = ScatteringAngle;
         scatang += ScatteringAngle;
@@ -1240,10 +1251,11 @@ void LOpticsOpt::PrepareDpWithField(void)
 
         DEBUG_MASSINFO("PrepareDp", "ScatterMom = %f,\t Centralp = %f,\t radloss = %f,\t ebeam = %f", ScatMom(DM, Ma, P0, TMath::Abs(HRSAngle)), eventdata.Data[kCentralp], eventdata.Data[kRadiLossDp], P0);
 
-        eventdata.Data[kRealDpKinMatrix] = eventdata.Data[kRealDpKin] - x_tg / ExtTarCor_DeltaCorr;
+        Double_t x_tg_off = x_tg - ExtTarCor_DeltaOff;
+        eventdata.Data[kRealDpKinMatrix] = eventdata.Data[kRealDpKin] - x_tg_off / ExtTarCor_DeltaCorr;
 
-        exttargcorr_dp += x_tg / ExtTarCor_DeltaCorr;
-        rms_exttargcorr_dp += (x_tg / ExtTarCor_DeltaCorr)*(x_tg / ExtTarCor_DeltaCorr);
+        exttargcorr_dp += x_tg_off / ExtTarCor_DeltaCorr;
+        rms_exttargcorr_dp += (x_tg_off / ExtTarCor_DeltaCorr)*(x_tg_off / ExtTarCor_DeltaCorr);
 
         // calculate expected dp_kin for all other excitation states
         for (UInt_t ExcitID = 0; ExcitID < NExcitationStates; ExcitID++) {
@@ -1265,6 +1277,68 @@ void LOpticsOpt::PrepareDpWithField(void)
     SumSquareDp();
 
     DEBUG_INFO("PrepareDp", "Done!");
+}
+
+Double_t LOpticsOpt::SumSquareDp(Bool_t IncludeExtraData)
+{
+    // return square sum of diff between calculated dp_kin and expected dp_kin
+
+    Double_t d_dp = 0; //Difference
+    Double_t rms_dp = 0; //mean square
+
+    static UInt_t NCall = 0;
+    NCall++;
+
+    UInt_t NCalibData = 0;
+
+    if (IncludeExtraData) {
+        Warning("SumSquareDp", "Data Beyond selected excitation state is included in this calculation");
+    }
+    for (UInt_t idx = 0; idx < fNRawData; idx++) {
+        Double_t dp, dp_kin;
+
+        EventData &eventdata = fRawData[idx];
+
+        //jump through data beyond selected excitation states
+        if (eventdata.Data[kExtraDataFlag] > 0 && !IncludeExtraData) continue;
+        NCalibData++;
+
+        Double_t x_fp = eventdata.Data[kX];
+        const Double_t(*powers)[5] = eventdata.powers;
+
+        // calculate the matrices we need
+        CalcMatrix(x_fp, fDMatrixElems);
+        // CalcMatrix(x_fp, fTMatrixElems);
+        // CalcMatrix(x_fp, fYMatrixElems);
+        // CalcMatrix(x_fp, fYTAMatrixElems);
+        // CalcMatrix(x_fp, fPMatrixElems);
+        // CalcMatrix(x_fp, fPTAMatrixElems);
+
+        // calculate momentum
+        dp = CalcTargetVar(fDMatrixElems, powers);
+        dp_kin = dp - eventdata.Data[kDpKinOffsets];
+
+        const UInt_t KineID = (UInt_t) (eventdata.Data[kKineID]);
+        assert(KineID < NKine); //check array index size
+        const Double_t ArbitaryDpKinShift = fArbitaryDpKinShift[KineID];
+
+        d_dp += dp_kin - eventdata.Data[kRealDpKinMatrix] + ArbitaryDpKinShift;
+        rms_dp += (dp_kin - eventdata.Data[kRealDpKinMatrix] + ArbitaryDpKinShift)*(dp_kin - eventdata.Data[kRealDpKinMatrix] + ArbitaryDpKinShift);
+
+        DEBUG_MASSINFO("SumSquareDp", "d_dp = %f = \t%f - \t%f", dp_kin - eventdata.Data[kRealDpKinMatrix], dp_kin, eventdata.Data[kRealDpKinMatrix]);
+
+        // save the results
+        eventdata.Data[kCalcDpKinMatrix] = dp_kin;
+        eventdata.Data[kCalcDpKin] = dp_kin + (eventdata.Data[kRealTgX] - ExtTarCor_DeltaOff) / ExtTarCor_DeltaCorr;
+    }
+
+    if (!IncludeExtraData)
+        assert(fNCalibData == NCalibData); // check number of event for calibration
+
+    DEBUG_INFO("SumSquareDp", "#%d : d_dp = %f, rms_dp = %f", NCall, d_dp / NCalibData, TMath::Sqrt(rms_dp / NCalibData));
+    //printf("SumSquareDp: #%d : d_dp = %f, rms_dp = %f\n", NCall, d_dp / NCalibData, TMath::Sqrt(rms_dp / NCalibData));
+
+    return rms_dp;
 }
 
 TCanvas * LOpticsOpt::CheckDp()
@@ -1494,68 +1568,6 @@ TCanvas * LOpticsOpt::CheckDpGlobal()
     }
 
     return c1;
-}
-
-Double_t LOpticsOpt::SumSquareDp(Bool_t IncludeExtraData)
-{
-    // return square sum of diff between calculated dp_kin and expected dp_kin
-
-    Double_t d_dp = 0; //Difference
-    Double_t rms_dp = 0; //mean square
-
-    static UInt_t NCall = 0;
-    NCall++;
-
-    UInt_t NCalibData = 0;
-
-    if (IncludeExtraData) {
-        Warning("SumSquareDp", "Data Beyond selected excitation state is included in this calculation");
-    }
-    for (UInt_t idx = 0; idx < fNRawData; idx++) {
-        Double_t dp, dp_kin;
-
-        EventData &eventdata = fRawData[idx];
-
-        //jump through data beyond selected excitation states
-        if (eventdata.Data[kExtraDataFlag] > 0 && !IncludeExtraData) continue;
-        NCalibData++;
-
-        Double_t x_fp = eventdata.Data[kX];
-        const Double_t(*powers)[5] = eventdata.powers;
-
-        // calculate the matrices we need
-        CalcMatrix(x_fp, fDMatrixElems);
-        // CalcMatrix(x_fp, fTMatrixElems);
-        // CalcMatrix(x_fp, fYMatrixElems);
-        // CalcMatrix(x_fp, fYTAMatrixElems);
-        // CalcMatrix(x_fp, fPMatrixElems);
-        // CalcMatrix(x_fp, fPTAMatrixElems);
-
-        // calculate momentum
-        dp = CalcTargetVar(fDMatrixElems, powers);
-        dp_kin = dp - eventdata.Data[kDpKinOffsets];
-
-        const UInt_t KineID = (UInt_t) (eventdata.Data[kKineID]);
-        assert(KineID < NKine); //check array index size
-        const Double_t ArbitaryDpKinShift = fArbitaryDpKinShift[KineID];
-
-        d_dp += dp_kin - eventdata.Data[kRealDpKinMatrix] + ArbitaryDpKinShift;
-        rms_dp += (dp_kin - eventdata.Data[kRealDpKinMatrix] + ArbitaryDpKinShift)*(dp_kin - eventdata.Data[kRealDpKinMatrix] + ArbitaryDpKinShift);
-
-        DEBUG_MASSINFO("SumSquareDp", "d_dp = %f = \t%f - \t%f", dp_kin - eventdata.Data[kRealDpKinMatrix], dp_kin, eventdata.Data[kRealDpKinMatrix]);
-
-        // save the results
-        eventdata.Data[kCalcDpKinMatrix] = dp_kin;
-        eventdata.Data[kCalcDpKin] = dp_kin + eventdata.Data[kRealTgX] / ExtTarCor_DeltaCorr;
-    }
-
-    if (!IncludeExtraData)
-        assert(fNCalibData == NCalibData); // check number of event for calibration
-
-    DEBUG_INFO("SumSquareDp", "#%d : d_dp = %f, rms_dp = %f", NCall, d_dp / NCalibData, TMath::Sqrt(rms_dp / NCalibData));
-    //printf("SumSquareDp: #%d : d_dp = %f, rms_dp = %f\n", NCall, d_dp / NCalibData, TMath::Sqrt(rms_dp / NCalibData));
-
-    return rms_dp;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

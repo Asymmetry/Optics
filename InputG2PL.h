@@ -58,6 +58,8 @@ const Double_t HRSCentralMom[] = {
     0
 };
 
+const Double_t TiltAngle[] = {0.0, 0.0, 0.0, 0.0, 0.0, 1e36};
+
 const Double_t GroundNuclearMass = 12.0107 * .931494028; //GeV/c^2  //Carbon Target
 const Double_t ExcitationEnergy[] = //selected excitation states for each kinematics
 {0., 0., 0., 0., 0.};
@@ -95,6 +97,9 @@ const Double_t RadiationLossByFoil[] = {
 const Double_t ExtTarCor_ThetaCorr = 0;
 const Double_t ExtTarCor_PhiCorr = 0;
 const Double_t ExtTarCor_DeltaCorr = 1e36;
+const Double_t ExtTarCor_ThetaOff = 0;
+const Double_t ExtTarCor_PhiOff = 0;
+const Double_t ExtTarCor_DeltaOff = 0;
 
 /////////////////////////////////////////////////////////////////////////
 // Database header
