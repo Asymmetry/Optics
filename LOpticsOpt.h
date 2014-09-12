@@ -69,23 +69,24 @@ public:
 
     virtual void Print(const Option_t* opt) const;
 
-    UInt_t Matrix2Array(Double_t Array[], Bool_t FreeParaFlag[] = NULL) // fCurrentMatrixElems -> Array
+    UInt_t Matrix2Array(Double_t Array[], Bool_t FreeParaFlag[] = NULL, Int_t UseFPOff = 0) // fCurrentMatrixElems -> Array
     {
         assert(fCurrentMatrixElems);
-        return Matrix2Array(Array, (*fCurrentMatrixElems), FreeParaFlag);
+        return Matrix2Array(Array, (*fCurrentMatrixElems), FreeParaFlag, UseFPOff);
     }
-    UInt_t Matrix2Array(Double_t Array[], const std::vector<THaMatrixElement> &Matrix, Bool_t FreeParaFlag[] = NULL);
+    UInt_t Matrix2Array(Double_t Array[], const std::vector<THaMatrixElement> &Matrix, Bool_t FreeParaFlag[] = NULL, Int_t UseFPOff = 0);
 
-    UInt_t Array2Matrix(const Double_t Array[]) // Array -> fCurrentMatrixElems
+    UInt_t Array2Matrix(const Double_t Array[], Int_t UseFPOff = 0) // Array -> fCurrentMatrixElems
     {
         assert(fCurrentMatrixElems);
-        return Array2Matrix(Array, (*fCurrentMatrixElems));
+        return Array2Matrix(Array, (*fCurrentMatrixElems), UseFPOff);
     }
-    UInt_t Array2Matrix(const Double_t Array[], std::vector<THaMatrixElement> &Matrix);
+    UInt_t Array2Matrix(const Double_t Array[], std::vector<THaMatrixElement> &Matrix, Int_t UseFPOff = 0);
 
     ///////////////////////////////////////////////////////////////////////////
     // Data storage
     ///////////////////////////////////////////////////////////////////////////
+    void DCS2FCS(const Double_t* det, Double_t* rot);
     UInt_t LoadRawData(TString DataFileName, UInt_t NLoad = MaxNRawData, UInt_t MaxDataPerGroup = (UInt_t) - 1); // load data to Rawdata[]
 
     enum {
@@ -102,10 +103,10 @@ public:
 
     enum CommonIdx {
         kCutID = 0, // cut ID in order of tree2ascii cut file
-        kX = 1, // L.tr.r_x
-        kTh = 2, // L.tr.r_th
-        kY = 3, // L.tr.r_y
-        kPhi = 4, // L.tr.r_ph
+        kX = 1, // L.tr.d_x
+        kTh = 2, // L.tr.d_th
+        kY = 3, // L.tr.d_y
+        kPh = 4, // L.tr.d_ph
         kurb_e = 5, // Beam energy
         kBeamX = 6, // urb.x or rb.x
         kBeamY = 7, // urb.y or rb.y
@@ -118,8 +119,12 @@ public:
     };
 
     enum ExtraSieveIdx {
-        kRealTh = 30, // real target th from survey
-        kRealPhi, // real target ph from survey
+        kRotX = 30, // L.tr.r_x
+        kRotTh, // L.tr.r_th
+        kRotY, // L.tr.r_y
+        kRotPh, // L.tr.r_ph
+        kRealTh, // real target th from survey
+        kRealPh, // real target ph from survey
         kRealTgX, // real target x from survey, beam
         kRealTgY, // real target y from survey, beam
         kRealThMatrix, // expected target th before extended target corrections
@@ -153,8 +158,8 @@ public:
 
     void PrepareSieve(void);
     void PrepareSieveWithField(void);
-    Double_t SumSquareDTh(void);
-    Double_t SumSquareDPhi(void);
+    Double_t SumSquareDTh(Int_t UseFPOff = 0);
+    Double_t SumSquareDPhi(Int_t UseFPOff = 0);
     TCanvas* CheckSieve(Int_t PlotKine = 0, UInt_t PlotFoilID = 0);
 
     Double_t fArbitaryDpKinShift[100]; // compensate bias due to dp event selections, array of [KineID]
@@ -200,8 +205,7 @@ public:
     std::vector<THaMatrixElement> fPTAMatrixElems; // involves abs(theta_fp)
     std::vector<THaMatrixElement> fYMatrixElems;
     std::vector<THaMatrixElement> fYTAMatrixElems; // involves abs(theta_fp)
-    std::vector<THaMatrixElement> fFPMatrixElems; // matrix elements used in
-
+    std::vector<THaMatrixElement> fFPMatrixElems; // Focus Plane offsets
     std::vector<THaMatrixElement> fLMatrixElems; // Path-length corrections (meters)
 
     void CalcMatrix(const double x, std::vector<THaMatrixElement> &matrix);

@@ -18,6 +18,7 @@ LOpticsOpt * opt;
 UInt_t NPara = 0;
 Double_t OldMatrixArray[10000] = {-99}; //NPara
 Bool_t free[10000] = {kFALSE}; //NPara
+Int_t UseFPOff = 1;
 
 UInt_t MaxDataPerGroup = 100000;
 TString DataSource;
@@ -27,31 +28,34 @@ TString DataSourceSuf = ".full.f51.new";
 typedef void (*PTRFCN)(Int_t &, Double_t *, Double_t &, Double_t*, Int_t);
 PTRFCN myfcn = NULL;
 
-void myfcn1(Int_t &, Double_t *, Double_t &f, Double_t *par, Int_t) {
+void myfcn1(Int_t &, Double_t *, Double_t &f, Double_t *par, Int_t)
+{
     //compute the sum of squares of dth
 
     assert(opt);
     assert(opt->fCurrentMatrixElems);
 
-    opt->Array2Matrix(par);
-    f = opt->SumSquareDTh();
+    opt->Array2Matrix(par, UseFPOff);
+    f = opt->SumSquareDTh(UseFPOff);
 
     return;
 }
 
-void myfcn2(Int_t &, Double_t *, Double_t &f, Double_t *par, Int_t) {
+void myfcn2(Int_t &, Double_t *, Double_t &f, Double_t *par, Int_t)
+{
     //compute the sum of squares of dph
 
     assert(opt);
     assert(opt->fCurrentMatrixElems);
 
-    opt->Array2Matrix(par);
-    f = opt->SumSquareDPhi();
+    opt->Array2Matrix(par, UseFPOff);
+    f = opt->SumSquareDPhi(UseFPOff);
 
     return;
 }
 
-void myfcn4(Int_t &, Double_t *, Double_t &f, Double_t *par, Int_t) {
+void myfcn4(Int_t &, Double_t *, Double_t &f, Double_t *par, Int_t)
+{
     //compute the sum of squares of dph
 
     assert(opt);
@@ -63,14 +67,15 @@ void myfcn4(Int_t &, Double_t *, Double_t &f, Double_t *par, Int_t) {
     return;
 }
 
-void DoMinTP(TString SourceDataBase, TString DestDataBase, UInt_t MaxDataPerGroup = 200) {
+void DoMinTP(TString SourceDataBase, TString DestDataBase, UInt_t MaxDataPerGroup = 200)
+{
     // minimize with root
 
     assert(opt);
     assert(opt->fCurrentMatrixElems);
 
     opt->LoadDataBase(SourceDataBase);
-    NPara = opt->Matrix2Array(OldMatrixArray, free);
+    NPara = opt->Matrix2Array(OldMatrixArray, free, UseFPOff);
     opt->LoadRawData(DataSource, (UInt_t) - 1, MaxDataPerGroup);
     opt->PrepareSieveWithField();
 
@@ -104,16 +109,17 @@ void DoMinTP(TString SourceDataBase, TString DestDataBase, UInt_t MaxDataPerGrou
     opt->Print();
     opt->SaveDataBase(DestDataBase);
 
-    opt->SumSquareDTh();
-    opt->SumSquareDPhi();
+    opt->SumSquareDTh(UseFPOff);
+    opt->SumSquareDPhi(UseFPOff);
 
-    TCanvas * c1 = opt->CheckSieve(1);
-    c1->Print(DestDataBase + ".Sieve.Opt.png", "png");
+    //    TCanvas * c1 = opt->CheckSieve(1);
+    //    c1->Print(DestDataBase + ".Sieve.Opt.png", "png");
 
     delete fitter;
 }
 
-void DoMinDp(TString SourceDataBase, TString DestDataBase, UInt_t MaxDataPerGroup = 200) {
+void DoMinDp(TString SourceDataBase, TString DestDataBase, UInt_t MaxDataPerGroup = 200)
+{
     // minimize with root
 
     assert(opt);
@@ -172,46 +178,48 @@ void DoMinDp(TString SourceDataBase, TString DestDataBase, UInt_t MaxDataPerGrou
 
     opt->SumSquareDp();
 
-    TCanvas * c1 = opt->CheckDp();
-    c1->Print(DestDataBase + ".Dp.Opt.png", "png");
+    //    TCanvas * c1 = opt->CheckDp();
+    //    c1->Print(DestDataBase + ".Dp.Opt.png", "png");
 
     delete fitter;
 }
 
-void PlotDataBase(TString DatabaseFileName, UInt_t MaxDataPerGroup = 1000) {
-   opt = new LOpticsOpt();
+void PlotDataBase(TString DatabaseFileName, UInt_t MaxDataPerGroup = 1000)
+{
+    opt = new LOpticsOpt();
 
-   assert(opt);
+    assert(opt);
 
-   gStyle->SetOptStat(0);
+    gStyle->SetOptStat(0);
 
-   opt->LoadDataBase(DatabaseFileName);
-   opt->Print();
+    opt->LoadDataBase(DatabaseFileName);
+    opt->Print();
 
-   opt->LoadRawData(DataSource, (UInt_t) - 1, MaxDataPerGroup);
+    opt->LoadRawData(DataSource, (UInt_t) - 1, MaxDataPerGroup);
 
-   opt->PrepareSieve();
-   //opt->PrepareDp();
-   
-   // opt->SumSquareDTh(kTRUE);
-   // opt->SumSquareDPhi(kTRUE);
-   opt->SumSquareDp(kTRUE);
+    opt->PrepareSieve();
+    //opt->PrepareDp();
 
-   TCanvas * c1 = opt->CheckSieve();
-   c1->Print(DatabaseFileName + ".Sieve.png","png");
-   //TCanvas * c1 = opt->CheckDpGlobal();
-   //c1->Print(DatabaseFileName + ".Dp.png","png");
+    // opt->SumSquareDTh(kTRUE);
+    // opt->SumSquareDPhi(kTRUE);
+    opt->SumSquareDp(kTRUE);
 
-   delete opt;
+    TCanvas * c1 = opt->CheckSieve();
+    c1->Print(DatabaseFileName + ".Sieve.png", "png");
+    //TCanvas * c1 = opt->CheckDpGlobal();
+    //c1->Print(DatabaseFileName + ".Dp.png","png");
+
+    delete opt;
 }
 
-void LOpticsOptScript(TString select, TString SourceDataBase, TString DestDataBase) {
+void LOpticsOptScript(TString select, TString SourceDataBase, TString DestDataBase)
+{
     opt = new LOpticsOpt();
 
     Int_t s = 0;
-    if (select=="theta") s = 1;
-    if (select=="phi") s = 2;
-    if (select=="delta") s = 4;
+    if (select == "theta") s = 1;
+    if (select == "phi") s = 2;
+    if (select == "delta") s = 4;
 
     gStyle->SetOptStat(0);
 
