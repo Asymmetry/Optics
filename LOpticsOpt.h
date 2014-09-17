@@ -99,56 +99,57 @@ public:
     } EventData;
     EventData fRawData[MaxNRawData]; // [fNRawData]
     UInt_t fNRawData;
-    UInt_t fNCalibData; // for dp calib only
 
     enum CommonIdx {
         kCutID = 0, // cut ID in order of tree2ascii cut file
-        kX = 1, // L.tr.d_x
-        kTh = 2, // L.tr.d_th
-        kY = 3, // L.tr.d_y
-        kPh = 4, // L.tr.d_ph
-        kurb_e = 5, // Beam energy
+        kDetX = 1, // L.tr.d_x
+        kDetTh = 2, // L.tr.d_th
+        kDetY = 3, // L.tr.d_y
+        kDetPh = 4, // L.tr.d_ph
+        kBeamE = 5, // Beam energy
         kBeamX = 6, // urb.x or rb.x
         kBeamY = 7, // urb.y or rb.y
         kSimX = 8,
         kSimTh = 9,
         kSimY = 10,
         kSimPh = 11,
-        kOrinTh = 12,
-        kOrinPh = 13
+        kSimOrTh = 12, // use this to calculate kSimDp
+        kSimOrPh = 13
     };
 
     enum ExtraSieveIdx {
-        kRotX = 30, // L.tr.r_x
+        kRotX = 14, // L.tr.r_x
         kRotTh, // L.tr.r_th
         kRotY, // L.tr.r_y
         kRotPh, // L.tr.r_ph
-        kRealTh, // real target th from survey
-        kRealPh, // real target ph from survey
-        kRealTgX, // real target x from survey, beam
-        kRealTgY, // real target y from survey, beam
+        kRealTh, // real target th from survey (or sim)
+        kRealPh, // real target ph from survey (or sim)
+        kRealX, // real target x from survey, beam (or sim)
+        kRealY, // real target y from survey, beam (or sim)
         kRealThMatrix, // expected target th before extended target corrections
-        kRealPhMatrix,
+        kRealPhMatrix, // expected target ph before extended target corrections
         kCalcTh, // calculated th from matrix
-        kCalcPh, // calculated ph from matrix
-        kSieveX,
-        kSieveY,
-        kSieveZ,
-        kBeamZ
+        kCalcPh // calculated ph from matrix
+    };
+
+    enum ExtraVertexIdx {
+        kFoilID = 30,
+        kRealReactZ, // expected ReactZ
+        kCalcY, // calculated y_tg
+        kCalcReactZ // calculated ReactZ
     };
 
     enum ExtraDpIdx {
-        kExtraDataFlag = 14, //Whether this event is for optimization; 0=used for optimization, 1=for plotting only
-        kKineID, //Delta Scan Kinematics ID
-        kCentralp, //Central Momentum
-        kRadiLossDp, //Radiation Loss for this event in unit of dp
-        kScatterAngle, //Scattering Angle
-        kDpKinOffsets, //=dp-dp_kin, based on sieve hole survey
-        kRealDpKin, //expected dp_kin, before radiation correction
-        kRealDpKinMatrix, //real dp kin before extended target corrections
-        kCalcDpKinMatrix, //calculated dp kin before extended target corrections
-        kCalcDpKin, //calculated dp_kin, before radiation correction
-        kRealDpKinExcitations/*Do not append more index*/ //first index of expected dp_kins for all excitation states
+        kKineID = 30, // Delta Scan Kinematics ID
+        kCentralp, // Central Momentum
+        kRadiLossDp, // Radiation Loss for this event in unit of dp
+        kScatterAngle, // Scattering Angle
+        kDpKinOffsets, // = dp - dp_kin, based on sieve hole survey
+        kRealDpKin, // expected dp_kin, before radiation correction
+        kRealDpKinMatrix, // real dp kin before extended target corrections
+        kCalcDpKinMatrix, // calculated dp kin before extended target corrections
+        kCalcDpKin, // calculated dp_kin, before radiation correction
+        kRealDpKinExcitations // first index of expected dp_kins for all excitation states
     };
 
     ///////////////////////////////////////////////////////////////////////////
@@ -157,15 +158,18 @@ public:
     const TVector3 GetSieveHoleTCS(UInt_t Col, UInt_t Row);
 
     void PrepareSieve(void);
-    void PrepareSieveWithField(void);
     Double_t SumSquareDTh(Int_t UseFPOff = 0);
     Double_t SumSquareDPhi(Int_t UseFPOff = 0);
     TCanvas* CheckSieve(Int_t PlotKine = 0, UInt_t PlotFoilID = 0);
 
+    Double_t fArbitaryYShift[100]; // compensate bias due to event selections, array of [FoilID]
+    void PrepareVertex(void);
+    Double_t SumSquareDY(Int_t UseFPOff = 0);
+    TCanvas* CheckY(void);
+
     Double_t fArbitaryDpKinShift[100]; // compensate bias due to dp event selections, array of [KineID]
     void PrepareDp(void);
-    void PrepareDpWithField(void);
-    Double_t SumSquareDp(Bool_t IncludeExtraData = kFALSE);
+    Double_t SumSquareDp(Int_t UseFPOff = 0);
     TCanvas* CheckDp(void);
     TCanvas* CheckDpGlobal(void);
 
