@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// LOpticsOpt
+// OpticsOpt
 //
 // HRS optics matrix optimization class
 // Based on THaVDC
@@ -56,10 +56,10 @@ class TVector3;
 class THaEvData;
 class THaMatrixElement;
 
-class LOpticsOpt : public THaTrackingDetector {
+class OpticsOpt : public THaTrackingDetector {
 public:
-    LOpticsOpt(const char* name = "Optimizer", const char* description = "Optimizer for HRS Optics", THaApparatus* a = NULL);
-    virtual ~LOpticsOpt();
+    OpticsOpt(const char* name = "Optimizer", const char* description = "Optimizer for HRS Optics", THaApparatus* a = NULL);
+    virtual ~OpticsOpt();
 
     ///////////////////////////////////////////////////////////////////////////
     // Database input/output
@@ -96,10 +96,10 @@ public:
 
     enum CommonIdx {
         kCutID = 0, // cut ID in order of tree2ascii cut file
-        kDetX = 1, // L.tr.d_x
-        kDetTh = 2, // L.tr.d_th
-        kDetY = 3, // L.tr.d_y
-        kDetPh = 4, // L.tr.d_ph
+        kDetX = 1, // tr.d_x
+        kDetTh = 2, // tr.d_th
+        kDetY = 3, // tr.d_y
+        kDetPh = 4, // tr.d_ph
         kBeamE = 5, // Beam energy
         kBeamX = 6, // urb.x or rb.x
         kBeamY = 7, // urb.y or rb.y
@@ -112,10 +112,10 @@ public:
     };
 
     enum ExtraSieveIdx {
-        kRotX = 14, // L.tr.r_x
-        kRotTh, // L.tr.r_th
-        kRotY, // L.tr.r_y
-        kRotPh, // L.tr.r_ph
+        kRotX = 14, // tr.r_x
+        kRotTh, // tr.r_th
+        kRotY, // tr.r_y
+        kRotPh, // tr.r_ph
         kRealTh, // real target th from survey (or sim)
         kRealPh, // real target ph from survey (or sim)
         kRealX, // real target x from survey, beam (or sim)
@@ -202,7 +202,7 @@ public:
     virtual EStatus Init(const TDatime&);
 
 private:
-    ClassDef(LOpticsOpt, 0) // HRS Optics Optimizer
+    ClassDef(OpticsOpt, 0) // HRS Optics Optimizer
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -228,7 +228,7 @@ public:
     Int_t OptOrder; //order optimize to
 };
 
-inline Double_t LOpticsOpt::ScatMom(Double_t DM, Double_t Ma, Double_t P0, Double_t Theta)
+inline Double_t OpticsOpt::ScatMom(Double_t DM, Double_t Ma, Double_t P0, Double_t Theta)
 {
     // Calc Scattered Electron Momentum
     // Assuming Electron with P0, Scattering on a fix target of Mass Ma Assuming

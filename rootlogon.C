@@ -1,4 +1,4 @@
 {
-    gROOT->LoadMacro("LOpticsOpt.C+");
-    gROOT->LoadMacro("LOpticsOptScript.C");
+    gROOT->LoadMacro("OpticsOpt.C+");
+    gROOT->LoadMacro("OpticsOptScript.C");
 }

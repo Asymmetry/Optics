@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// LOpticsOpt
+// OpticsOpt
 //
 // HRS optics matrix optimization class
 // Based on THaVDC
@@ -55,7 +55,7 @@
 #include "THaTrackingDetector.h"
 #include "VarDef.h"
 
-#include "LOpticsOpt.h"
+#include "OpticsOpt.h"
 
 #ifdef WITH_DEBUG
 #include <iostream>
@@ -68,15 +68,15 @@ using THaString::Split;
 // Input Sections
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "InputG2PL.h"
+#include "InputG2P.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Constructors
 ///////////////////////////////////////////////////////////////////////////////
 
-LOpticsOpt::LOpticsOpt(const char* name, const char* description, THaApparatus* apparatus) : THaTrackingDetector(name, description, apparatus)
+OpticsOpt::OpticsOpt(const Char_t* name, const Char_t* description, THaApparatus* apparatus) : THaTrackingDetector(name, description, apparatus)
 {
-    fPrefix = new char[1000];
+    fPrefix = new Char_t[1000];
     sprintf(fPrefix, "%s", Prefix);
 
     fCurrentMatrixElems = NULL;
@@ -87,26 +87,26 @@ LOpticsOpt::LOpticsOpt(const char* name, const char* description, THaApparatus* 
     fTCSInHCS.RotateAxes(TCSX, TCSY, TCSZ);
 
     fPointingOffset.SetXYZ(-MissPointZ * TMath::Sin(HRSAngle) * TMath::Cos(HRSAngle), MissPointY, MissPointZ * TMath::Sin(HRSAngle) * TMath::Sin(HRSAngle));
-    DEBUG_INFO("LOpticsOpt", "Read in configuration " + InputID);
-    DEBUG_INFO("LOpticsOpt", "HRS @ %f Degree, PointingOffset = (%f,%f,%f), SievePos = (%f,%f,%f)", HRSAngle / TMath::Pi()*180, fPointingOffset.X(), fPointingOffset.Y(), fPointingOffset.Z(), SieveOffX, SieveOffY, ZPos);
+    DEBUG_INFO("OpticsOpt", "Read in configuration " + InputID);
+    DEBUG_INFO("OpticsOpt", "HRS @ %f Degree, PointingOffset = (%f,%f,%f), SievePos = (%f,%f,%f)", HRSAngle / TMath::Pi()*180, fPointingOffset.X(), fPointingOffset.Y(), fPointingOffset.Z(), SieveOffX, SieveOffY, ZPos);
 
     fNRawData = 0;
 
     for (Int_t i = 0; i < 100; i++) fArbitaryDpKinShift[i] = 0;
 }
 
-LOpticsOpt::~LOpticsOpt()
+OpticsOpt::~OpticsOpt()
 {
-    // Nothing to be done
+    // Nothing to do
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // Database I/O
 ///////////////////////////////////////////////////////////////////////////////
 
-Int_t LOpticsOpt::LoadDataBase(TString DataBaseName)
+Int_t OpticsOpt::LoadDataBase(TString DataBaseName)
 {
-    static const char* const here = "LoadDataBase";
+    static const Char_t * const here = "LoadDataBase";
     OldComments = "";
 
     FILE* file = fopen(DataBaseName, "r");
@@ -117,7 +117,7 @@ Int_t LOpticsOpt::LoadDataBase(TString DataBaseName)
     } else DEBUG_INFO("LoadDataBase", "Parsing Database %s", DataBaseName.Data());
 
     const Int_t LEN = 200;
-    char buff[LEN];
+    Char_t buff[LEN];
 
     // Look for the section [<prefix>.global] in the file, e.g. [ R.global ]
     TString tag(fPrefix);
@@ -219,7 +219,7 @@ Int_t LOpticsOpt::LoadDataBase(TString DataBaseName)
         // a known type of matrix element. In particular, this will
         // stop on a subsequent timestamp or configuration tag starting with "["
         if (line_spl.empty()) continue; //ignore empty lines
-        const char* w = line_spl[0].c_str();
+        const Char_t* w = line_spl[0].c_str();
         vsiz_t npow = power[w];
         if (npow == 0) break;
 
@@ -296,7 +296,7 @@ Int_t LOpticsOpt::LoadDataBase(TString DataBaseName)
     return kOK;
 }
 
-Int_t LOpticsOpt::SaveDataBase(TString DataBaseName)
+Int_t OpticsOpt::SaveDataBase(TString DataBaseName)
 {
     // Output database in memory to new database file
     // WARNING: Hard coded text included
@@ -430,7 +430,7 @@ Int_t LOpticsOpt::SaveDataBase(TString DataBaseName)
     return kOK;
 }
 
-void LOpticsOpt::Print(const Option_t* opt) const
+void OpticsOpt::Print(const Option_t* opt) const
 {
     // Print current matrix
 
@@ -438,7 +438,7 @@ void LOpticsOpt::Print(const Option_t* opt) const
     typedef vector<THaMatrixElement>::size_type vsiz_t;
 
     // Print out the optics matrices, to verify they make sense
-    printf("LOpticsOpt::Print: Matrix FP (t000, y000, p000)\n");
+    printf("OpticsOpt::Print: Matrix FP (t000, y000, p000)\n");
     for (vsiz_t i = 0; i < fFPMatrixElems.size(); i++) {
         const THaMatrixElement& m = fFPMatrixElems[i];
         for (vsiz_t j = 0; j < m.pw.size(); j++) {
@@ -451,7 +451,7 @@ void LOpticsOpt::Print(const Option_t* opt) const
         printf("\n");
     }
 
-    printf("LOpticsOpt::Print: Transport Matrix:  D-terms\n");
+    printf("OpticsOpt::Print: Transport Matrix:  D-terms\n");
     for (vsiz_t i = 0; i < fDMatrixElems.size(); i++) {
         const THaMatrixElement& m = fDMatrixElems[i];
         for (vsiz_t j = 0; j < m.pw.size(); j++) {
@@ -465,7 +465,7 @@ void LOpticsOpt::Print(const Option_t* opt) const
         printf("\n");
     }
 
-    printf("LOpticsOpt::Print: Transport Matrix:  T-terms\n");
+    printf("OpticsOpt::Print: Transport Matrix:  T-terms\n");
     for (vsiz_t i = 0; i < fTMatrixElems.size(); i++) {
         const THaMatrixElement& m = fTMatrixElems[i];
         for (vsiz_t j = 0; j < m.pw.size(); j++) {
@@ -479,7 +479,7 @@ void LOpticsOpt::Print(const Option_t* opt) const
         printf("\n");
     }
 
-    printf("LOpticsOpt::Print: Transport Matrix:  Y-terms\n");
+    printf("OpticsOpt::Print: Transport Matrix:  Y-terms\n");
     for (vsiz_t i = 0; i < fYMatrixElems.size(); i++) {
         const THaMatrixElement& m = fYMatrixElems[i];
         for (vsiz_t j = 0; j < m.pw.size(); j++) {
@@ -506,7 +506,7 @@ void LOpticsOpt::Print(const Option_t* opt) const
     //        printf("\n");
     //    }
 
-    printf("LOpticsOpt::Print: Transport Matrix:  P-terms\n");
+    printf("OpticsOpt::Print: Transport Matrix:  P-terms\n");
     for (vsiz_t i = 0; i < fPMatrixElems.size(); i++) {
         const THaMatrixElement& m = fPMatrixElems[i];
         for (vsiz_t j = 0; j < m.pw.size(); j++) {
@@ -554,13 +554,13 @@ void LOpticsOpt::Print(const Option_t* opt) const
     return;
 }
 
-Int_t LOpticsOpt::Matrix2Array(Double_t Array[], Bool_t FreeParaFlag[], Int_t UseFPOff)
+Int_t OpticsOpt::Matrix2Array(Double_t Array[], Bool_t FreeParaFlag[], Int_t UseFPOff)
 {
     assert(fCurrentMatrixElems);
     return Matrix2Array(Array, (*fCurrentMatrixElems), FreeParaFlag, UseFPOff);
 }
 
-Int_t LOpticsOpt::Matrix2Array(Double_t Array[], const std::vector<THaMatrixElement> &Matrix, Bool_t FreeParaFlag[], Int_t UseFPOff)
+Int_t OpticsOpt::Matrix2Array(Double_t Array[], const std::vector<THaMatrixElement> &Matrix, Bool_t FreeParaFlag[], Int_t UseFPOff)
 {
     // Matrix -> Array
 
@@ -601,13 +601,13 @@ Int_t LOpticsOpt::Matrix2Array(Double_t Array[], const std::vector<THaMatrixElem
     return idx;
 }
 
-Int_t LOpticsOpt::Array2Matrix(const Double_t Array[], Int_t UseFPOff)
+Int_t OpticsOpt::Array2Matrix(const Double_t Array[], Int_t UseFPOff)
 {
     assert(fCurrentMatrixElems);
     return Array2Matrix(Array, (*fCurrentMatrixElems), UseFPOff);
 }
 
-Int_t LOpticsOpt::Array2Matrix(const Double_t Array[], std::vector<THaMatrixElement> &Matrix, Int_t UseFPOff)
+Int_t OpticsOpt::Array2Matrix(const Double_t Array[], std::vector<THaMatrixElement> &Matrix, Int_t UseFPOff)
 {
     // Array -> fCurrentMatrixElems
 
@@ -648,7 +648,7 @@ Int_t LOpticsOpt::Array2Matrix(const Double_t Array[], std::vector<THaMatrixElem
 // Data storage
 ///////////////////////////////////////////////////////////////////////////////
 
-void LOpticsOpt::DCS2FCS(const Double_t* det, Double_t* rot)
+void OpticsOpt::DCS2FCS(const Double_t* det, Double_t* rot)
 {
     Double_t xdet = det[0];
     Double_t tdet = det[1];
@@ -680,7 +680,7 @@ void LOpticsOpt::DCS2FCS(const Double_t* det, Double_t* rot)
     rot[3] = p;
 }
 
-Int_t LOpticsOpt::LoadRawData(TString DataFileName, Int_t NLoad, Int_t MaxDataPerGroup)
+Int_t OpticsOpt::LoadRawData(TString DataFileName, Int_t NLoad, Int_t MaxDataPerGroup)
 {
     // Load "f51" ascii data file to Rawdata[]
 
@@ -697,7 +697,7 @@ Int_t LOpticsOpt::LoadRawData(TString DataFileName, Int_t NLoad, Int_t MaxDataPe
 
     Int_t NRead = 0;
     const Int_t LEN = 2000;
-    char buff[LEN];
+    Char_t buff[LEN];
 
     Double_t NDataRead = 0;
     Int_t NLineRead = 0;
@@ -787,7 +787,7 @@ Int_t LOpticsOpt::LoadRawData(TString DataFileName, Int_t NLoad, Int_t MaxDataPe
 // Optimization related Commands
 ///////////////////////////////////////////////////////////////////////////////
 
-const TVector3 LOpticsOpt::GetSieveHoleTCS(Int_t Col, Int_t Row)
+const TVector3 OpticsOpt::GetSieveHoleTCS(Int_t Col, Int_t Row)
 {
     assert(Col < NSieveCol);
     assert(Row < NSieveRow);
@@ -795,7 +795,7 @@ const TVector3 LOpticsOpt::GetSieveHoleTCS(Int_t Col, Int_t Row)
     return SieveHoleTCS;
 }
 
-void LOpticsOpt::PrepareSieve(void)
+void OpticsOpt::PrepareSieve(void)
 {
     // Calculate kRealTh, kRealPh
 
@@ -863,7 +863,7 @@ void LOpticsOpt::PrepareSieve(void)
     DEBUG_INFO("PrepareSieve", "Done!");
 }
 
-Double_t LOpticsOpt::SumSquareDTh(Int_t UseFPOff)
+Double_t OpticsOpt::SumSquareDTh(Int_t UseFPOff)
 {
     // return square sum of diff between calculated tg_th and expected tg_th
 
@@ -926,7 +926,7 @@ Double_t LOpticsOpt::SumSquareDTh(Int_t UseFPOff)
     return rmsth;
 }
 
-Double_t LOpticsOpt::SumSquareDPhi(Int_t UseFPOff)
+Double_t OpticsOpt::SumSquareDPhi(Int_t UseFPOff)
 {
     // return square sum of diff between calculated tg_ph and expected tg_ph
 
@@ -990,7 +990,7 @@ Double_t LOpticsOpt::SumSquareDPhi(Int_t UseFPOff)
     return rmsphi;
 }
 
-TList* LOpticsOpt::CheckSieve(Int_t PlotType)
+TList* OpticsOpt::CheckSieve(Int_t PlotType)
 {
     // Visualize Sieve Plane
 
@@ -1129,7 +1129,7 @@ TList* LOpticsOpt::CheckSieve(Int_t PlotType)
     return l;
 }
 
-void LOpticsOpt::PrepareVertex(void)
+void OpticsOpt::PrepareVertex(void)
 {
     // calculate kRealY
 
@@ -1177,7 +1177,7 @@ void LOpticsOpt::PrepareVertex(void)
     DEBUG_INFO("PrepareVertex", "Done!");
 }
 
-Double_t LOpticsOpt::SumSquareDY(Int_t UseFPOff)
+Double_t OpticsOpt::SumSquareDY(Int_t UseFPOff)
 {
     // return square sum of diff between calculated tg_y and expected tg_y
 
@@ -1244,7 +1244,7 @@ Double_t LOpticsOpt::SumSquareDY(Int_t UseFPOff)
     return rmsy;
 }
 
-TList* LOpticsOpt::CheckY(Int_t PlotType)
+TList* OpticsOpt::CheckY(Int_t PlotType)
 {
     // Visualize Y spectrum
 
@@ -1375,7 +1375,7 @@ TList* LOpticsOpt::CheckY(Int_t PlotType)
     return l;
 }
 
-void LOpticsOpt::PrepareDp(void)
+void OpticsOpt::PrepareDp(void)
 {
     // calculate expected dp_kin, dp_kin offsets ....
 
@@ -1498,7 +1498,7 @@ void LOpticsOpt::PrepareDp(void)
     DEBUG_INFO("PrepareDp", "Done!");
 }
 
-Double_t LOpticsOpt::SumSquareDp(Int_t UseFPOff)
+Double_t OpticsOpt::SumSquareDp(Int_t UseFPOff)
 {
     // return square sum of diff between calculated dp_kin and expected dp_kin
 
@@ -1567,7 +1567,7 @@ Double_t LOpticsOpt::SumSquareDp(Int_t UseFPOff)
     return rmsdp;
 }
 
-TList* LOpticsOpt::CheckDp(Int_t PlotType)
+TList* OpticsOpt::CheckDp(Int_t PlotType)
 {
     // Visualize 1D hitogram of dp_kin
     assert(NKines <= 12);
@@ -1730,7 +1730,7 @@ TList* LOpticsOpt::CheckDp(Int_t PlotType)
 // declarations for target vertex reconstruction
 ///////////////////////////////////////////////////////////////////////////////
 
-void LOpticsOpt::CalcMatrix(const Double_t x, vector<THaMatrixElement>& matrix)
+void OpticsOpt::CalcMatrix(const Double_t x, vector<THaMatrixElement>& matrix)
 {
     // calculates the values of the matrix elements for a given location
     // by evaluating a polynomial in x of order it->order with
@@ -1748,7 +1748,7 @@ void LOpticsOpt::CalcMatrix(const Double_t x, vector<THaMatrixElement>& matrix)
     }
 }
 
-Double_t LOpticsOpt::CalcTargetVar(const vector<THaMatrixElement>& matrix, const Double_t powers[][5])
+Double_t OpticsOpt::CalcTargetVar(const vector<THaMatrixElement>& matrix, const Double_t powers[][5])
 {
     // calculates the value of a variable at the target
     // the x-dependence is already in the matrix, so only 1-3 (or np) used
@@ -1775,25 +1775,25 @@ Double_t LOpticsOpt::CalcTargetVar(const vector<THaMatrixElement>& matrix, const
 // Inherited from THaTrackingDetector
 ///////////////////////////////////////////////////////////////////////////////
 
-Int_t LOpticsOpt::Decode(const THaEvData&)
+Int_t OpticsOpt::Decode(const THaEvData&)
 {
 
     return 0;
 }
 
-Int_t LOpticsOpt::CoarseTrack(TClonesArray&)
+Int_t OpticsOpt::CoarseTrack(TClonesArray&)
 {
 
     return 0;
 }
 
-Int_t LOpticsOpt::FineTrack(TClonesArray&)
+Int_t OpticsOpt::FineTrack(TClonesArray&)
 {
 
     return 0;
 }
 
-THaAnalysisObject::EStatus LOpticsOpt::Init(const TDatime&)
+THaAnalysisObject::EStatus OpticsOpt::Init(const TDatime&)
 {
 
     return fStatus = kOK;
@@ -1803,7 +1803,7 @@ THaAnalysisObject::EStatus LOpticsOpt::Init(const TDatime&)
 // class for storing matrix element data
 ///////////////////////////////////////////////////////////////////////////////
 
-THaMatrixElement::THaMatrixElement() : iszero(kTRUE), pw(3), order(0), v(0), poly(LOpticsOpt::kPORDER), OptOrder(0)
+THaMatrixElement::THaMatrixElement() : iszero(kTRUE), pw(3), order(0), v(0), poly(OpticsOpt::kPORDER), OptOrder(0)
 {
     // Nothing to be done
 }
@@ -1834,4 +1834,4 @@ void THaMatrixElement::SkimPoly()
     if (order == 0) iszero = kTRUE;
 }
 
-ClassImp(LOpticsOpt);
+ClassImp(OpticsOpt);

@@ -1,5 +1,4 @@
 void build()
 {
-    gROOT->ProcessLine(".L LOpticsOpt.C+");
-    gROOT->ProcessLine(".L ROpticsOpt.C+");
+    gROOT->ProcessLine(".L OpticsOpt.C+");
 }

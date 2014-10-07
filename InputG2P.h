@@ -11,6 +11,7 @@ using namespace std;
 const TString User = "Chao Gu";
 
 const TString InputID = "G2P_LHRS";
+//const TString InputID = "G2P_RHRS";
 
 /////////////////////////////////////////////////////////////////////////
 // Input Sections
@@ -22,6 +23,7 @@ const Double_t D2R = TMath::Pi() / 180.;
 
 // G2P: set as central sieve hole angle
 const Double_t HRSAngle = 5.767 * D2R; // WARNING: check
+//const Double_t HRSAngle = -5.791 * D2R; // RHRS // WARNING: check
 
 // MissPoint* are in HCS
 const Double_t MissPointZ = 0.0; // mm
@@ -37,10 +39,22 @@ const Int_t NSieveCol = 7; // WARNING: 7
 const Double_t SieveXbyRow[] = {-3 * 13.3096e-3, -2 * 13.3096e-3, -1 * 13.3096e-3, 0.0, 1 * 13.3096e-3, 2 * 13.3096e-3, 3 * 13.3096e-3, 1e36};
 const Int_t NSieveRow = 7; // WARNING: 7
 
+// RHRS
+//const Double_t SieveYbyCol[] = {-3 * 6.1214e-3, -2 * 6.1214e-3, -1 * 6.1214e-3, 0.0, 1 * 4.7752e-3, 2 * 4.7752e-3, 3 * 4.7752e-3, 1e36};
+//const Int_t NSieveCol = 7; // WARNING: 7
+//
+//const Double_t SieveXbyRow[] = {-3 * 13.3096e-3, -2 * 13.3096e-3, -1 * 13.3096e-3, 0.0, 1 * 13.3096e-3, 2 * 13.3096e-3, 3 * 13.3096e-3, 1e36};
+//const Int_t NSieveRow = 7; // WARNING: 7
+
 // SieveOff* are in TCS
 const Double_t SieveOffY = 0.; //(2.97*cos(HRSAngle)).
 const Double_t SieveOffX = -0.165 * 1e-3; //-(2.61)
 const Double_t ZPos = 799.60 * 1e-3; //800.
+
+// RHRS
+//const Double_t SieveOffY = 0.; //(2.97*cos(HRSAngle)).
+//const Double_t SieveOffX = 0.; //-(2.61)
+//const Double_t ZPos = 799.46 * 1e-3; //800.
 
 /////////////////////////////////////////////////////////////////////////
 // Vertex Position Inputs
@@ -101,12 +115,18 @@ const Double_t ExtTarCor_DeltaCorr = 1e36;
 /////////////////////////////////////////////////////////////////////////
 // Database header
 const Char_t* Prefix = "L.vdc.";
+//const Char_t* Prefix = "R.vdc.";
 
 const Char_t* DatabaseHeader = "\
 [ L.global ]   \n\
 0.3327 1 0.0 270.2 0.0 -1.6e-03        VDC Angle, Plane Spacing, Gamma Coefficents  \n\
 matrix elements   \n\
 ";
+//const Char_t* DatabaseHeader = "\
+//[ R.global ]  \n\
+//0.3348 1 0.0 269.8 0.0 -1.6e-03        VDC Angle, Plane Spacing, Gamma Coefficents  \n\
+//matrix elements   \n\
+//";
 
 const Char_t* DatabaseFooter = "\
 L 0 0 0 0  25.713\n\
