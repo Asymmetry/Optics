@@ -11,6 +11,7 @@
 //   For Momentums, Masses                   -  GeV, GeV/c^2
 //
 // Author: Jin Huang <jinhuang@jlab.org>
+//         Chao Gu <cg2ja@jlab.org>
 //
 // Modification:
 //   Jun 25, 2010 Updated for APEX optics calibration
@@ -20,33 +21,38 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <cassert>
+#include <cstring>
 #include <map>
+#include <vector>
 
 #include "TROOT.h"
-#include "TTree.h"
-#include "TFile.h"
-#include "TDatime.h"
-#include "TGraphErrors.h"
-#include "TClonesArray.h"
-#include "TList.h"
-#include "TCanvas.h"
-#include "TPad.h"
-#include "TH2.h"
-#include "TH1.h"
-#include "TF1.h"
-#include "TLatex.h"
-#include "TVector3.h"
-#include "TLine.h"
+#include "TError.h"
 #include "TArrow.h"
+#include "TCanvas.h"
+#include "TClonesArray.h"
+#include "TDatime.h"
+#include "TF1.h"
+#include "TFile.h"
+#include "TH1.h"
+#include "TH2.h"
+#include "TLatex.h"
+#include "TLine.h"
+#include "TList.h"
 #include "TMath.h"
+#include "TRotation.h"
 #include "TString.h"
+#include "TTree.h"
+#include "TVector3.h"
 
-#include "THaGlobals.h"
+#include "THaAnalysisObject.h"
 #include "THaEvData.h"
-#include "THaDetMap.h"
+#include "THaGlobals.h"
 #include "THaTrack.h"
 #include "THaScintillator.h"
 #include "THaSpectrometer.h"
+#include "THaString.h"
+#include "THaTrackingDetector.h"
 #include "VarDef.h"
 
 #include "LOpticsOpt.h"
@@ -68,8 +74,7 @@ using THaString::Split;
 // Constructors
 ///////////////////////////////////////////////////////////////////////////////
 
-LOpticsOpt::LOpticsOpt(const char* name, const char* description, THaApparatus* apparatus) :
-THaTrackingDetector(name, description, apparatus)
+LOpticsOpt::LOpticsOpt(const char* name, const char* description, THaApparatus* apparatus) : THaTrackingDetector(name, description, apparatus)
 {
     fPrefix = new char[1000];
     sprintf(fPrefix, "%s", Prefix);
@@ -87,13 +92,12 @@ THaTrackingDetector(name, description, apparatus)
 
     fNRawData = 0;
 
-    for (UInt_t i = 0; i < 100; i++)
-        fArbitaryDpKinShift[i] = 0;
+    for (Int_t i = 0; i < 100; i++) fArbitaryDpKinShift[i] = 0;
 }
 
 LOpticsOpt::~LOpticsOpt()
 {
-    // Destructor.
+    // Nothing to be done
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -112,7 +116,7 @@ Int_t LOpticsOpt::LoadDataBase(TString DataBaseName)
         return kFileError;
     } else DEBUG_INFO("LoadDataBase", "Parsing Database %s", DataBaseName.Data());
 
-    const int LEN = 200;
+    const Int_t LEN = 200;
     char buff[LEN];
 
     // Look for the section [<prefix>.global] in the file, e.g. [ R.global ]
@@ -127,7 +131,7 @@ Int_t LOpticsOpt::LoadDataBase(TString DataBaseName)
     TString tag2(tag);
     tag.ToLower();
 
-    bool found = false;
+    Bool_t found = false;
     while (!found && fgets(buff, LEN, file) != NULL) {
         // read in comments
         TString line = buff;
@@ -193,7 +197,7 @@ Int_t LOpticsOpt::LoadDataBase(TString DataBaseName)
     matrix_map["PTA"] = &fPTAMatrixElems;
     matrix_map["L"] = &fLMatrixElems;
 
-    map<string, int> fp_map;
+    map<string, Int_t> fp_map;
     fp_map["t"] = 0;
     fp_map["y"] = 1;
     fp_map["p"] = 2;
@@ -221,7 +225,7 @@ Int_t LOpticsOpt::LoadDataBase(TString DataBaseName)
 
 #if DEBUG_LEVEL>=4
         cout << "Matrix Line = ";
-        for (Ssiz_t i = 1; (UInt_t) i < (UInt_t) line_spl.size(); i++) {
+        for (Ssiz_t i = 1; i < line_spl.size(); i++) {
             cout << i << "(" << line_spl[i].c_str() << "), ";
         }
         cout << endl;
@@ -258,7 +262,7 @@ Int_t LOpticsOpt::LoadDataBase(TString DataBaseName)
         if (ME.iszero) continue;
 
         // Add this matrix element to the appropriate array
-        vector<THaMatrixElement> *mat = matrix_map[w];
+        vector<THaMatrixElement>* mat = matrix_map[w];
         if (mat) {
             // Special checks for focal plane matrix elements
             if (mat == &fFPMatrixElems) {
@@ -273,7 +277,7 @@ Int_t LOpticsOpt::LoadDataBase(TString DataBaseName)
             } else {
                 // All other matrix elements are just appended to the respective array
                 // but ensure that they are defined only once!
-                bool match = false;
+                Bool_t match = false;
                 for (vector<THaMatrixElement>::iterator it = mat->begin(); it != mat->end() && !(match = it->match(ME)); it++) {
                 }
                 if (match) {
@@ -309,7 +313,7 @@ Int_t LOpticsOpt::SaveDataBase(TString DataBaseName)
     TDatime dt;
     fprintf(file, "# -------------------------------------------------------------");
     fprintf(file, "\n");
-    fprintf(file, "# Optimized by Chao Gu @ %s", dt.AsString());
+    fprintf(file, "# Optimized by %s @ %s", User.Data(), dt.AsString());
     fprintf(file, "\n");
     fprintf(file, "# Saved to %s", DataBaseName.Data());
     fprintf(file, "\n");
@@ -336,7 +340,7 @@ Int_t LOpticsOpt::SaveDataBase(TString DataBaseName)
         for (vsiz_t j = 0; j < m.pw.size(); j++) {
             fprintf(file, "%d ", m.pw[j]);
         }
-        int j;
+        Int_t j;
         for (j = 0; j < m.order; j++) {
             fprintf(file, " %13.6e", m.poly[j]);
         }
@@ -354,7 +358,7 @@ Int_t LOpticsOpt::SaveDataBase(TString DataBaseName)
         for (vsiz_t j = 0; j < m.pw.size(); j++) {
             fprintf(file, "%d ", m.pw[j]);
         }
-        int j;
+        Int_t j;
         for (j = 0; j < m.order; j++) {
             fprintf(file, " %13.6e", m.poly[j]);
         }
@@ -372,7 +376,7 @@ Int_t LOpticsOpt::SaveDataBase(TString DataBaseName)
         for (vsiz_t j = 0; j < m.pw.size(); j++) {
             fprintf(file, "%d ", m.pw[j]);
         }
-        int j;
+        Int_t j;
         for (j = 0; j < m.order; j++) {
             fprintf(file, " %13.6e", m.poly[j]);
         }
@@ -390,7 +394,7 @@ Int_t LOpticsOpt::SaveDataBase(TString DataBaseName)
         for (vsiz_t j = 0; j < m.pw.size(); j++) {
             fprintf(file, "%d ", m.pw[j]);
         }
-        int j;
+        Int_t j;
         for (j = 0; j < m.order; j++) {
             fprintf(file, " %13.6e", m.poly[j]);
         }
@@ -408,7 +412,7 @@ Int_t LOpticsOpt::SaveDataBase(TString DataBaseName)
         for (vsiz_t j = 0; j < m.pw.size(); j++) {
             fprintf(file, "%d ", m.pw[j]);
         }
-        int j;
+        Int_t j;
         for (j = 0; j < m.order; j++) {
             fprintf(file, " %13.6e", m.poly[j]);
         }
@@ -440,7 +444,7 @@ void LOpticsOpt::Print(const Option_t* opt) const
         for (vsiz_t j = 0; j < m.pw.size(); j++) {
             printf("  %2d", m.pw[j]);
         }
-        for (int j = 0; j < m.order; j++) {
+        for (Int_t j = 0; j < m.order; j++) {
             printf("  %g", m.poly[j]);
         }
         printf(" : Opt -> %d", m.OptOrder);
@@ -453,11 +457,11 @@ void LOpticsOpt::Print(const Option_t* opt) const
         for (vsiz_t j = 0; j < m.pw.size(); j++) {
             printf("  %2d", m.pw[j]);
         }
-        for (int j = 0; j < m.order; j++) {
+        for (Int_t j = 0; j < m.order; j++) {
             printf("\t%g", m.poly[j]);
         }
         printf(" : Opt -> %d", m.OptOrder);
-        if ((UInt_t) m.order != m.OptOrder) printf(" != Matrix Order !!");
+        if (m.order != m.OptOrder) printf(" != Matrix Order !!");
         printf("\n");
     }
 
@@ -467,11 +471,11 @@ void LOpticsOpt::Print(const Option_t* opt) const
         for (vsiz_t j = 0; j < m.pw.size(); j++) {
             printf("  %2d", m.pw[j]);
         }
-        for (int j = 0; j < m.order; j++) {
+        for (Int_t j = 0; j < m.order; j++) {
             printf("\t%g", m.poly[j]);
         }
         printf(" : Opt -> %d", m.OptOrder);
-        if ((UInt_t) m.order != m.OptOrder) printf(" != Matrix Order !!");
+        if (m.order != m.OptOrder) printf(" != Matrix Order !!");
         printf("\n");
     }
 
@@ -481,11 +485,11 @@ void LOpticsOpt::Print(const Option_t* opt) const
         for (vsiz_t j = 0; j < m.pw.size(); j++) {
             printf("  %2d", m.pw[j]);
         }
-        for (int j = 0; j < m.order; j++) {
+        for (Int_t j = 0; j < m.order; j++) {
             printf("\t%g", m.poly[j]);
         }
         printf(" : Opt -> %d", m.OptOrder);
-        if ((UInt_t) m.order != m.OptOrder) printf(" != Matrix Order !!");
+        if (m.order != m.OptOrder) printf(" != Matrix Order !!");
         printf("\n");
     }
 
@@ -495,7 +499,7 @@ void LOpticsOpt::Print(const Option_t* opt) const
     //        for (vsiz_t j = 0; j < m.pw.size(); j++) {
     //            printf("  %2d", m.pw[j]);
     //        }
-    //        for (int j = 0; j < m.order; j++) {
+    //        for (Int_t j = 0; j < m.order; j++) {
     //            printf("\t%g", m.poly[j]);
     //        }
     //        printf(" : Opt -> %d", m.OptOrder);
@@ -508,11 +512,11 @@ void LOpticsOpt::Print(const Option_t* opt) const
         for (vsiz_t j = 0; j < m.pw.size(); j++) {
             printf("  %2d", m.pw[j]);
         }
-        for (int j = 0; j < m.order; j++) {
+        for (Int_t j = 0; j < m.order; j++) {
             printf("\t%g", m.poly[j]);
         }
         printf(" : Opt -> %d", m.OptOrder);
-        if ((UInt_t) m.order != m.OptOrder) printf(" != Matrix Order !!");
+        if (m.order != m.OptOrder) printf(" != Matrix Order !!");
         printf("\n");
     }
 
@@ -522,7 +526,7 @@ void LOpticsOpt::Print(const Option_t* opt) const
     //        for (vsiz_t j = 0; j < m.pw.size(); j++) {
     //            printf("  %2d", m.pw[j]);
     //        }
-    //        for (int j = 0; j < m.order; j++) {
+    //        for (Int_t j = 0; j < m.order; j++) {
     //            printf("\t%g", m.poly[j]);
     //        }
     //        printf(" : Opt -> %d", m.OptOrder);
@@ -535,33 +539,39 @@ void LOpticsOpt::Print(const Option_t* opt) const
     //        for (vsiz_t j = 0; j < m.pw.size(); j++) {
     //            printf("  %2d", m.pw[j]);
     //        }
-    //        for (int j = 0; j < m.order; j++) {
+    //        for (Int_t j = 0; j < m.order; j++) {
     //            printf("\t%g", m.poly[j]);
     //        }
     //        printf(" : Opt -> %d", m.OptOrder);
     //        printf("\n");
     //    }
 
-    printf("fArbitaryDpKinShift[%d] = {", NKine);
-    for (UInt_t KineID = 0; KineID < NKine; KineID++)
+    printf("fArbitaryDpKinShift[%d] = {", NKines);
+    for (Int_t KineID = 0; KineID < NKines; KineID++)
         printf("%f  ", fArbitaryDpKinShift[KineID]);
     printf("}\n");
 
     return;
 }
 
-UInt_t LOpticsOpt::Matrix2Array(Double_t Array[], const std::vector<THaMatrixElement> &Matrix, Bool_t FreeParaFlag[], Int_t UseFPOff)
+Int_t LOpticsOpt::Matrix2Array(Double_t Array[], Bool_t FreeParaFlag[], Int_t UseFPOff)
+{
+    assert(fCurrentMatrixElems);
+    return Matrix2Array(Array, (*fCurrentMatrixElems), FreeParaFlag, UseFPOff);
+}
+
+Int_t LOpticsOpt::Matrix2Array(Double_t Array[], const std::vector<THaMatrixElement> &Matrix, Bool_t FreeParaFlag[], Int_t UseFPOff)
 {
     // Matrix -> Array
 
     typedef vector<THaMatrixElement>::size_type vsiz_t;
 
-    UInt_t idx = 0;
+    Int_t idx = 0;
 
     for (vsiz_t i = 0; i < Matrix.size(); i++) {
         const THaMatrixElement& m = Matrix[i];
-        UInt_t j;
-        for (j = 0; (int) j < m.order; j++) {
+        Int_t j;
+        for (j = 0; (Int_t) j < m.order; j++) {
             if (FreeParaFlag) FreeParaFlag[idx] = j < m.OptOrder ? kTRUE : kFALSE;
             Array[idx++] = m.poly[j];
         }
@@ -574,8 +584,8 @@ UInt_t LOpticsOpt::Matrix2Array(Double_t Array[], const std::vector<THaMatrixEle
     if (UseFPOff != 0) {
         for (vsiz_t i = 0; i < fFPMatrixElems.size(); i++) {
             const THaMatrixElement& m = fFPMatrixElems[i];
-            UInt_t j;
-            for (j = 0; (int) j < m.order; j++) {
+            Int_t j;
+            for (j = 0; (Int_t) j < m.order; j++) {
                 if (FreeParaFlag) FreeParaFlag[idx] = j < m.OptOrder ? kTRUE : kFALSE;
                 Array[idx++] = m.poly[j];
             }
@@ -591,17 +601,23 @@ UInt_t LOpticsOpt::Matrix2Array(Double_t Array[], const std::vector<THaMatrixEle
     return idx;
 }
 
-UInt_t LOpticsOpt::Array2Matrix(const Double_t Array[], std::vector<THaMatrixElement> &Matrix, Int_t UseFPOff)
+Int_t LOpticsOpt::Array2Matrix(const Double_t Array[], Int_t UseFPOff)
+{
+    assert(fCurrentMatrixElems);
+    return Array2Matrix(Array, (*fCurrentMatrixElems), UseFPOff);
+}
+
+Int_t LOpticsOpt::Array2Matrix(const Double_t Array[], std::vector<THaMatrixElement> &Matrix, Int_t UseFPOff)
 {
     // Array -> fCurrentMatrixElems
 
     typedef vector<THaMatrixElement>::size_type vsiz_t;
 
-    UInt_t idx = 0;
+    Int_t idx = 0;
 
     for (vsiz_t i = 0; i < Matrix.size(); i++) {
         THaMatrixElement& m = Matrix[i];
-        int j;
+        Int_t j;
         m.order = kPORDER;
         for (j = 0; j < m.order; j++) {
             m.poly[j] = Array[idx];
@@ -613,7 +629,7 @@ UInt_t LOpticsOpt::Array2Matrix(const Double_t Array[], std::vector<THaMatrixEle
     if (UseFPOff != 0) {
         for (vsiz_t i = 0; i < fFPMatrixElems.size(); i++) {
             THaMatrixElement& m = fFPMatrixElems[i];
-            int j;
+            Int_t j;
             m.order = kPORDER;
             for (j = 0; j < m.order; j++) {
                 m.poly[j] = Array[idx];
@@ -664,7 +680,7 @@ void LOpticsOpt::DCS2FCS(const Double_t* det, Double_t* rot)
     rot[3] = p;
 }
 
-UInt_t LOpticsOpt::LoadRawData(TString DataFileName, UInt_t NLoad, UInt_t MaxDataPerGroup)
+Int_t LOpticsOpt::LoadRawData(TString DataFileName, Int_t NLoad, Int_t MaxDataPerGroup)
 {
     // Load "f51" ascii data file to Rawdata[]
 
@@ -673,24 +689,25 @@ UInt_t LOpticsOpt::LoadRawData(TString DataFileName, UInt_t NLoad, UInt_t MaxDat
     if (BeamShiftX != 0)
         DEBUG_WARNING("LoadRawData", "Shift Beam X = %f", BeamShiftX);
 
-    UInt_t datagrpcnt[kMaxDataGroup] = {0};
+    Int_t datagrpcnt[kMaxDataGroup];
+    memset(datagrpcnt, 0, sizeof (datagrpcnt));
 
     FILE* file = fopen(DataFileName, "r");
     if (!file) return kFileError;
 
-    UInt_t NRead = 0;
-    const int LEN = 2000;
+    Int_t NRead = 0;
+    const Int_t LEN = 2000;
     char buff[LEN];
 
     Double_t NDataRead = 0;
-    int NLineRead = 0;
+    Int_t NLineRead = 0;
 
     while (fgets(buff, LEN, file)) {
         NLineRead++;
 
         if (NLineRead % 100000 == 0) DEBUG_INFO("LoadRawData", "%d/%d Entries Loaded", NRead, NLineRead);
 
-        assert(NRead < MaxNRawData); //too much data if fails
+        assert(NRead < kMaxNRawData); //too much data if fails
 
         if (NRead >= NLoad) break;
 
@@ -705,18 +722,18 @@ UInt_t LOpticsOpt::LoadRawData(TString DataFileName, UInt_t NLoad, UInt_t MaxDat
         // Split the line into whitespace-separated fields
         vector<string> line_spl = Split(line);
 
-        assert(line_spl.size() <= MaxNEventData); // array size check
-        for (UInt_t idx = 0; idx < line_spl.size(); idx++)
-            eventdata[idx] = atof(line_spl[idx].c_str());
+        assert(line_spl.size() <= kMaxNEventData); // array size check
+        for (vector<string>::size_type i = 0; i < line_spl.size(); i++)
+            eventdata[i] = atof(line_spl[i].c_str());
 
         // WARNING : shift beam x
         if (BeamShiftX != 0)
             eventdata[kBeamX] += BeamShiftX;
 
         // determine whether to save this data
-        UInt_t cutid = (UInt_t) eventdata[kCutID];
+        Int_t cutid = eventdata[kCutID];
         assert(cutid < kMaxDataGroup); // too many cuts
-        UInt_t & grpcnt = datagrpcnt[cutid];
+        Int_t& grpcnt = datagrpcnt[cutid];
         grpcnt++;
         if (grpcnt > MaxDataPerGroup) {
             DEBUG_MASSINFO("LoadRawData", "ignore data %d from cutid %d (%d ev total)", NLineRead, cutid, grpcnt);
@@ -740,7 +757,7 @@ UInt_t LOpticsOpt::LoadRawData(TString DataFileName, UInt_t NLoad, UInt_t MaxDat
         Double_t ph_fp = eventdata[kRotPh];
 
         // calculate the powers we need
-        for (int i = 0; i < kNUM_PRECOMP_POW; i++) {
+        for (Int_t i = 0; i < kPreCalPow; i++) {
             powers[i][0] = pow(x_fp, i);
             powers[i][1] = pow(th_fp, i);
             powers[i][2] = pow(y_fp, i);
@@ -754,11 +771,10 @@ UInt_t LOpticsOpt::LoadRawData(TString DataFileName, UInt_t NLoad, UInt_t MaxDat
     fclose(file);
     fNRawData = NRead;
 
-    UInt_t goodstatcut = 0, actcutcnt = 0;
-    for (int i = 0; i < kMaxDataGroup; i++) {
+    Int_t goodstatcut = 0, actcutcnt = 0;
+    for (Int_t i = 0; i < kMaxDataGroup; i++) {
         if (datagrpcnt[i] > 0) actcutcnt++;
-
-        if (datagrpcnt[i] > MaxDataPerGroup) goodstatcut++;
+        if (datagrpcnt[i] >= MaxDataPerGroup) goodstatcut++;
     }
 
     DEBUG_INFO("LoadRawData", "Event Limit/Cut = %d, %d / %d ev read, %d / %d cut have enough ev", MaxDataPerGroup, NRead, NLineRead, goodstatcut, actcutcnt);
@@ -771,7 +787,7 @@ UInt_t LOpticsOpt::LoadRawData(TString DataFileName, UInt_t NLoad, UInt_t MaxDat
 // Optimization related Commands
 ///////////////////////////////////////////////////////////////////////////////
 
-const TVector3 LOpticsOpt::GetSieveHoleTCS(UInt_t Col, UInt_t Row)
+const TVector3 LOpticsOpt::GetSieveHoleTCS(Int_t Col, Int_t Row)
 {
     assert(Col < NSieveCol);
     assert(Row < NSieveRow);
@@ -786,16 +802,16 @@ void LOpticsOpt::PrepareSieve(void)
     Double_t exttargcorr_th = 0, rms_exttargcorr_th = 0;
     Double_t exttargcorr_ph = 0, rms_exttargcorr_ph = 0;
 
-    for (UInt_t idx = 0; idx < fNRawData; idx++) {
-        EventData &eventdata = fRawData[idx];
+    for (Int_t i = 0; i < fNRawData; i++) {
+        EventData& eventdata = fRawData[i];
 
-        UInt_t res = (UInt_t) eventdata.Data[kCutID];
-        // const UInt_t KineID = res / (NSieveRow * NSieveCol * NFoils); //starting 0!
+        Int_t res = eventdata.Data[kCutID];
+        // const Int_t KineID = res / (NSieveRow * NSieveCol * NFoils); //starting 0!
         res = res % (NSieveRow * NSieveCol * NFoils);
-        const UInt_t FoilID = res / (NSieveRow * NSieveCol); //starting 0!
+        const Int_t FoilID = res / (NSieveRow * NSieveCol); //starting 0!
         res = res % (NSieveRow * NSieveCol);
-        const UInt_t Col = res / (NSieveRow); //starting 0!
-        const UInt_t Row = res % (NSieveRow); //starting 0!
+        const Int_t Col = res / (NSieveRow); //starting 0!
+        const Int_t Row = res % (NSieveRow); //starting 0!
 
         assert(FoilID < NFoils); //check array index size
 
@@ -854,13 +870,13 @@ Double_t LOpticsOpt::SumSquareDTh(Int_t UseFPOff)
     Double_t dth = 0; //Difference
     Double_t rmsth = 0; //mean square
 
-    static UInt_t NCall = 0;
+    static Int_t NCall = 0;
     NCall++;
 
     Double_t theta;
 
-    for (UInt_t idx = 0; idx < fNRawData; idx++) {
-        EventData &eventdata = fRawData[idx];
+    for (Int_t i = 0; i < fNRawData; i++) {
+        EventData& eventdata = fRawData[i];
 
         Double_t(*powers)[5] = eventdata.powers;
 
@@ -874,7 +890,7 @@ Double_t LOpticsOpt::SumSquareDTh(Int_t UseFPOff)
             eventdata.Data[kRotPh] = rot[3];
 
             // calculate the powers we need
-            for (int i = 0; i < kNUM_PRECOMP_POW; i++) {
+            for (Int_t i = 0; i < kPreCalPow; i++) {
                 powers[i][0] = pow(rot[0], i);
                 powers[i][1] = pow(rot[1], i);
                 powers[i][2] = pow(rot[2], i);
@@ -917,13 +933,13 @@ Double_t LOpticsOpt::SumSquareDPhi(Int_t UseFPOff)
     Double_t dphi = 0; //Difference
     Double_t rmsphi = 0; //mean square
 
-    static UInt_t NCall = 0;
+    static Int_t NCall = 0;
     NCall++;
 
     Double_t phi;
 
-    for (UInt_t idx = 0; idx < fNRawData; idx++) {
-        EventData &eventdata = fRawData[idx];
+    for (Int_t i = 0; i < fNRawData; i++) {
+        EventData& eventdata = fRawData[i];
 
         Double_t(*powers)[5] = eventdata.powers;
 
@@ -937,7 +953,7 @@ Double_t LOpticsOpt::SumSquareDPhi(Int_t UseFPOff)
             eventdata.Data[kRotPh] = rot[3];
 
             // calculate the powers we need
-            for (int i = 0; i < kNUM_PRECOMP_POW; i++) {
+            for (Int_t i = 0; i < kPreCalPow; i++) {
                 powers[i][0] = pow(rot[0], i);
                 powers[i][1] = pow(rot[1], i);
                 powers[i][2] = pow(rot[2], i);
@@ -974,104 +990,105 @@ Double_t LOpticsOpt::SumSquareDPhi(Int_t UseFPOff)
     return rmsphi;
 }
 
-TCanvas * LOpticsOpt::CheckSieve(Int_t PlotKine, UInt_t PlotFoilID)
+TList* LOpticsOpt::CheckSieve(Int_t PlotType)
 {
     // Visualize Sieve Plane
 
-    const UInt_t nplot = (PlotKine != 0) ? NKine : 1;
+    const Int_t NPlots = (PlotType != 0) ? NFoils * NKines : 1;
+    assert(NKines <= 12);
 
-    TH2D * HSievePlane[NKine] = {0};
-    Double_t x_lim[NKine] = {0};
-    Double_t y_lim[NKine] = {0};
+    TH2D * HSievePlane[NPlots];
+    const Double_t x_lim = 1.3 * TMath::Max(TMath::Abs(SieveYbyCol[0]), TMath::Abs(SieveYbyCol[NSieveCol - 1]));
+    const Double_t y_lim = 1.5 * TMath::Max(TMath::Abs(SieveXbyRow[0]), TMath::Abs(SieveXbyRow[NSieveRow - 1]));
 
-    for (UInt_t idx = 0; idx < NKine; idx++) {
-        x_lim[idx] = 1.3 * TMath::Max(TMath::Abs(SieveYbyCol[0]), TMath::Abs(SieveYbyCol[NSieveCol - 1]));
-        y_lim[idx] = 1.5 * TMath::Max(TMath::Abs(SieveXbyRow[0]), TMath::Abs(SieveXbyRow[NSieveRow - 1]));
-
-        HSievePlane[idx] = new TH2D(Form("Sieve_Kine%d", idx), Form("Sieve Plane Proj. (tg_X vs tg_Y) for Data set #%d", idx), 500, -x_lim[idx], x_lim[idx], 500, -y_lim[idx], y_lim[idx]);
-
-        HSievePlane[idx]->SetXTitle("Sieve H [m]");
-        HSievePlane[idx]->SetYTitle("Sieve V [m]");
-        assert(HSievePlane[idx]); // assure memory allocation
+    for (Int_t i = 0; i < NPlots; i++) {
+        HSievePlane[i] = new TH2D(Form("Dataset%d", i), Form("Sieve Plane Proj. (tg_X vs tg_Y) for Kine #%d", i / NFoils), 400, -x_lim, x_lim, 400, -y_lim, y_lim);
+        HSievePlane[i]->SetXTitle("Sieve H [m]");
+        HSievePlane[i]->SetYTitle("Sieve V [m]");
+        assert(HSievePlane[i]); // assure memory allocation
     }
 
     Double_t dX = 0, dY = 0;
 
     enum {
-        kEventID, kRealSieveX, kRealSieveY, kCalcSieveX, kCalcSieveY
+        kEvNum, kRealSieveX, kRealSieveY, kCalcSieveX, kCalcSieveY
     };
 
-    Double_t SieveEventID[NKine][NSieveCol][NSieveRow][5] = {
-        {
-            {
-                {0}
-            }
-        }
-    };
+    Double_t SieveEventID[NPlots][NSieveCol][NSieveRow][5];
+    memset(SieveEventID, 0, sizeof (SieveEventID));
 
-    for (UInt_t idx = 0; idx < fNRawData; idx++) {
-        const EventData &eventdata = fRawData[idx];
+    for (Int_t i = 0; i < fNRawData; i++) {
+        const EventData& eventdata = fRawData[i];
 
-        UInt_t res = (UInt_t) eventdata.Data[kCutID];
-        UInt_t KineID = res / (NSieveRow * NSieveCol * NFoils); //starting 0!
-        res = res % (NSieveRow * NSieveCol * NFoils);
-        const UInt_t FoilID = res / (NSieveRow * NSieveCol); //starting 0!
+        Int_t res = eventdata.Data[kCutID];
+        Int_t PlotID = res / (NSieveRow * NSieveCol); //starting 0!
         res = res % (NSieveRow * NSieveCol);
-        const UInt_t Col = res / (NSieveRow); //starting 0!
-        const UInt_t Row = res % (NSieveRow); //starting 0!
+        const Int_t Col = res / (NSieveRow); //starting 0!
+        const Int_t Row = res % (NSieveRow); //starting 0!
 
-        assert(KineID < NKine); //array index check
-
-        if (FoilID != PlotFoilID) continue;
-        if (PlotKine == 0) KineID = 0;
+        assert(PlotID < NKines * NFoils); //array index check
+        if (NPlots == 1) PlotID = 0;
 
         const TVector3 SieveHoleTCS = GetSieveHoleTCS(Col, Row);
 
         Double_t ProjectionX = eventdata.Data[kRealX] + (eventdata.Data[kCalcTh] + eventdata.Data[kRealX] * ExtTarCor_ThetaCorr) * (SieveHoleTCS.Z());
         Double_t ProjectionY = eventdata.Data[kRealY] + (eventdata.Data[kCalcPh] + eventdata.Data[kRealY] * ExtTarCor_PhiCorr) * (SieveHoleTCS.Z());
 
-        HSievePlane[KineID]->Fill(ProjectionY, ProjectionX);
+        HSievePlane[PlotID]->Fill(ProjectionY, ProjectionX);
 
         dX += ProjectionX - SieveHoleTCS.X();
         dY += ProjectionY - SieveHoleTCS.Y();
 
-        SieveEventID[KineID][Col][Row][kEventID] = idx;
-        SieveEventID[KineID][Col][Row][kRealSieveX] = SieveHoleTCS.X();
-        SieveEventID[KineID][Col][Row][kRealSieveY] = SieveHoleTCS.Y();
-        SieveEventID[KineID][Col][Row][kCalcSieveX] = ProjectionX;
-        SieveEventID[KineID][Col][Row][kCalcSieveY] = ProjectionY;
+        SieveEventID[PlotID][Col][Row][kEvNum]++;
+        SieveEventID[PlotID][Col][Row][kRealSieveX] += SieveHoleTCS.X();
+        SieveEventID[PlotID][Col][Row][kRealSieveY] += SieveHoleTCS.Y();
+        SieveEventID[PlotID][Col][Row][kCalcSieveX] += ProjectionX;
+        SieveEventID[PlotID][Col][Row][kCalcSieveY] += ProjectionY;
     }
 
     DEBUG_INFO("CheckSieve", "Average : dX = %f,\t dY = %f", dX / fNRawData, dY / fNRawData);
 
-    TCanvas * c1 = new TCanvas("SieveCheck", "SieveCheck", 1800, 1100);
-
-    if (nplot <= 1) {
-        c1 = new TCanvas("SieveCheck", "SieveCheck", 800, 1100);
-        c1->Divide(1, 1);
-    } else if (nplot <= 3) {
-        c1 = new TCanvas("SieveCheck", "SieveCheck", 1800, 1100);
-        c1->Divide(3, 1);
-    } else if (nplot <= 6) {
-        c1 = new TCanvas("SieveCheck", "SieveCheck", 1800, 1100);
-        c1->Divide(3, 2);
+    TCanvas * c[NFoils];
+    Double_t w = 720, h = 960;
+    Int_t splitw = 1, splith = 1;
+    if (NPlots == 1) {
+        c[0] = new TCanvas("SieveCheck", "SieveCheck", w, h);
     } else {
-        c1 = new TCanvas("SieveCheck", "SieveCheck", 1800, 1100);
-        c1->Divide(4, 2);
+        if (NKines <= 4) {
+            w = 1440;
+            h = 960;
+            splitw = 4;
+            splith = 1;
+        } else if (NKines <= 8) {
+            w = 1440;
+            h = 960;
+            splitw = 4;
+            splith = 2;
+        } else if (NKines <= 12) {
+            w = 1440;
+            h = 640;
+            splitw = 6;
+            splith = 2;
+        }
+        for (Int_t i = 0; i < NFoils; i++) {
+            c[i] = new TCanvas(Form("SieveCheck%d", i), Form("SieveCheck%d", i), w, h);
+            c[i]->Divide(splitw, splith);
+        }
     }
 
-    for (UInt_t idx = 0; idx < nplot; idx++) {
-        UInt_t KineID = idx;
+    for (Int_t i = 0; i < NPlots; i++) {
+        const Int_t FoilID = i % NFoils;
+        const Int_t KineID = i / NFoils;
+        if (NPlots == 1) c[0]->cd();
+        else c[FoilID]->cd(KineID + 1);
 
-        c1->cd(idx + 1);
-
-        assert(HSievePlane[idx]); //pointer check
-        HSievePlane[idx]->Draw("COLZ");
+        assert(HSievePlane[i]); //pointer check
+        HSievePlane[i]->Draw("COLZ");
 
         // Draw Sieve
         const Double_t plotwidth = 0.004;
-        for (UInt_t Row = 0; Row < NSieveRow; Row++) {
-            for (UInt_t Col = 0; Col < NSieveCol; Col++) {
+        for (Int_t Row = 0; Row < NSieveRow; Row++) {
+            for (Int_t Col = 0; Col < NSieveCol; Col++) {
                 const Double_t posx = SieveOffY + SieveYbyCol[Col];
                 const Double_t posy = SieveOffX + SieveXbyRow[Row];
 
@@ -1086,40 +1103,46 @@ TCanvas * LOpticsOpt::CheckSieve(Int_t PlotKine, UInt_t PlotFoilID)
         }
 
         // Draw arrows
-        for (UInt_t Col = 0; Col < NSieveCol; Col++) {
-            for (UInt_t Row = 0; Row < NSieveRow; Row++) {
-                if (SieveEventID[KineID][Col][Row][kEventID] > 0) {
-                    assert(SieveEventID[KineID][Col][Row][kEventID] < fNRawData); //array index bondary check
-                    TArrow * ar2 = new TArrow(SieveEventID[KineID][Col][Row][kCalcSieveY], SieveEventID[KineID][Col][Row][kCalcSieveX], SieveEventID[KineID][Col][Row][kRealSieveY], SieveEventID[KineID][Col][Row][kRealSieveX], 0.008, "|>");
+        for (Int_t Col = 0; Col < NSieveCol; Col++) {
+            for (Int_t Row = 0; Row < NSieveRow; Row++) {
+                SieveEventID[i][Col][Row][kRealSieveX] /= SieveEventID[i][Col][Row][kEvNum];
+                SieveEventID[i][Col][Row][kRealSieveY] /= SieveEventID[i][Col][Row][kEvNum];
+                SieveEventID[i][Col][Row][kCalcSieveX] /= SieveEventID[i][Col][Row][kEvNum];
+                SieveEventID[i][Col][Row][kCalcSieveY] /= SieveEventID[i][Col][Row][kEvNum];
+                if (SieveEventID[i][Col][Row][kEvNum] > 5) {
+                    TArrow * ar2 = new TArrow(SieveEventID[i][Col][Row][kCalcSieveY], SieveEventID[i][Col][Row][kCalcSieveX], SieveEventID[i][Col][Row][kRealSieveY], SieveEventID[i][Col][Row][kRealSieveX], 0.008, "|>");
                     ar2->SetAngle(40);
                     ar2->SetLineColor(kMagenta);
                     ar2->SetFillColor(kMagenta);
 
                     const Double_t ignorelimit = 0.005;
-                    if ((ar2->GetX1() - ar2->GetX2())*(ar2->GetX1() - ar2->GetX2())+(ar2->GetY1() - ar2->GetY2())*(ar2->GetY1() - ar2->GetY2()) > ignorelimit * ignorelimit)
-                        ar2->Draw();
+                    if ((ar2->GetX1() - ar2->GetX2())*(ar2->GetX1() - ar2->GetX2())+(ar2->GetY1() - ar2->GetY2())*(ar2->GetY1() - ar2->GetY2()) > ignorelimit * ignorelimit) ar2->Draw();
                 }
             }
         }
     }
 
-    return c1;
+    TList* l = new TList();
+    if (NPlots == 1) l->Add(c[0]);
+    else for (Int_t i = 0; i < NFoils; i++) l->Add(c[i]);
+
+    return l;
 }
 
 void LOpticsOpt::PrepareVertex(void)
 {
     // calculate kRealY
 
-    for (UInt_t idx = 0; idx < fNRawData; idx++) {
-        EventData &eventdata = fRawData[idx];
+    for (Int_t i = 0; i < fNRawData; i++) {
+        EventData& eventdata = fRawData[i];
 
-        UInt_t res = (UInt_t) eventdata.Data[kCutID];
-        // const UInt_t KineID = res / (NSieveRow * NSieveCol * NFoils); //starting 0!
+        Int_t res = eventdata.Data[kCutID];
+        // const Int_t KineID = res / (NSieveRow * NSieveCol * NFoils); //starting 0!
         res = res % (NSieveRow * NSieveCol * NFoils);
-        const UInt_t FoilID = res / (NSieveRow * NSieveCol); //starting 0!
+        const Int_t FoilID = res / (NSieveRow * NSieveCol); //starting 0!
         res = res % (NSieveRow * NSieveCol);
-        const UInt_t Col = res / (NSieveRow); //starting 0!
-        const UInt_t Row = res % (NSieveRow); //starting 0!
+        const Int_t Col = res / (NSieveRow); //starting 0!
+        const Int_t Row = res % (NSieveRow); //starting 0!
 
         assert(FoilID < NFoils); //check array index size
 
@@ -1161,13 +1184,13 @@ Double_t LOpticsOpt::SumSquareDY(Int_t UseFPOff)
     Double_t dy = 0; //Difference
     Double_t rmsy = 0; //mean square
 
-    static UInt_t NCall = 0;
+    static Int_t NCall = 0;
     NCall++;
 
     Double_t y;
 
-    for (UInt_t idx = 0; idx < fNRawData; idx++) {
-        EventData &eventdata = fRawData[idx];
+    for (Int_t i = 0; i < fNRawData; i++) {
+        EventData &eventdata = fRawData[i];
 
         Double_t(*powers)[5] = eventdata.powers;
 
@@ -1181,7 +1204,7 @@ Double_t LOpticsOpt::SumSquareDY(Int_t UseFPOff)
             eventdata.Data[kRotPh] = rot[3];
 
             // calculate the powers we need
-            for (int i = 0; i < kNUM_PRECOMP_POW; i++) {
+            for (Int_t i = 0; i < kPreCalPow; i++) {
                 powers[i][0] = pow(rot[0], i);
                 powers[i][1] = pow(rot[1], i);
                 powers[i][2] = pow(rot[2], i);
@@ -1204,107 +1227,152 @@ Double_t LOpticsOpt::SumSquareDY(Int_t UseFPOff)
         //y = CalcTargetVar(fYMatrixElems, powers) + CalcTargetVar(fYTAMatrixElems, powers);
         y = CalcTargetVar(fYMatrixElems, powers);
 
-        const UInt_t FoilID = (UInt_t) eventdata.Data[kFoilID];
+        const Int_t FoilID = eventdata.Data[kFoilID];
         assert(FoilID < NFoils);
-        const Double_t ArbitaryYShift = fArbitaryYShift[FoilID];
 
-        dy += y - eventdata.Data[kRealY] + ArbitaryYShift;
-        rmsy += (y - eventdata.Data[kRealY] + ArbitaryYShift)*(y - eventdata.Data[kRealY] + ArbitaryYShift);
+        dy += y - eventdata.Data[kRealY];
+        rmsy += (y - eventdata.Data[kRealY])*(y - eventdata.Data[kRealY]);
 
-        DEBUG_MASSINFO("SumSquareDY", "dy = %f = \t%f - \t%f", y - eventdata.Data[kRealY] + ArbitaryYShift, y, eventdata.Data[kRealY] + ArbitaryYShift);
+        DEBUG_MASSINFO("SumSquareDY", "dy = %f = \t%f - \t%f", y - eventdata.Data[kRealY], y, eventdata.Data[kRealY]);
 
         // save the results
         eventdata.Data[kCalcY] = y;
     }
 
-    DEBUG_INFO("SumSquareDY", "#%d : dy = %f, rmsy = %f", NCall, dy / fNRawData, TMath::Sqrt(rmsy / fNRawData));
+    DEBUG_INFO("SumSquareDY", "#%d : dy = %f,\t rmsy = %f", NCall, dy / fNRawData, TMath::Sqrt(rmsy / fNRawData));
 
     return rmsy;
 }
 
-TCanvas * LOpticsOpt::CheckY()
+TList* LOpticsOpt::CheckY(Int_t PlotType)
 {
     // Visualize Y spectrum
 
-    const UInt_t nplot = NFoils;
-    TH1D * HTgY[NFoils] = {0};
-    TH1D * HTgYReal[NFoils] = {0};
-    const Double_t YRange = 10e-3;
+    const Int_t NPlots = (PlotType != 0) ? NKines : 1;
+    assert(NKines <= 12);
 
-    for (UInt_t idx = 0; idx < NFoils; idx++) {
-        HTgY[idx] = new TH1D(Form("Target_Y%d", idx), Form("Target Y for Data set #%d", idx), 400, -YRange, YRange);
-        HTgYReal[idx] = new TH1D(Form("Target_Y%d", idx), Form("Target Y for Data set #%d", idx), 400, -YRange, YRange);
+    TH1D * HTgY[NPlots];
+    TH1D * HTgYReal[NPlots];
+    TH1D * HTgYDiff[NPlots];
 
-        HTgY[idx]->SetXTitle("Target Y [m]");
-        assert(HTgY[idx]); // assure memory allocation
+    Double_t zmin = 1e38, zmax = -1e38;
+    for (Int_t i = 0; i < NFoils; i++) {
+        if (targetfoils[i] < zmin) zmin = targetfoils[i];
+        if (targetfoils[i] > zmax) zmax = targetfoils[i];
+    }
+    Double_t ylimu = -zmin * TMath::Sin(HRSAngle) + 10e-3;
+    Double_t ylimd = -zmax * TMath::Sin(HRSAngle) - 10e-3;
+
+    for (Int_t i = 0; i < NPlots; i++) {
+        HTgY[i] = new TH1D(Form("DataSet%d", i), Form("Target Y for Kine #%d", i), 400, ylimd, ylimu);
+        HTgYReal[i] = new TH1D(Form("DataSet%d", i), Form("Target Y for Kine #%d", i), 400, ylimd, ylimu);
+        HTgY[i]->SetXTitle("Target Y [m]");
+        HTgYReal[i]->SetXTitle("Target Y [m]");
+
+        HTgYDiff[i] = new TH1D(Form("DataSet%d", i), Form("Diff of Target Y for Kine #%d", i), 200, -10e-3, 10e-3);
+        HTgYDiff[i]->SetXTitle("Cal Y - Real Y [m]");
+        assert(HTgY[i]); // assure memory allocation
+        assert(HTgYDiff[i]);
     }
 
     Double_t dy = 0;
-    Double_t dy_rms = 0;
+    Double_t rmsy = 0;
 
-    for (UInt_t idx = 0; idx < fNRawData; idx++) {
-        EventData &eventdata = fRawData[idx];
+    for (Int_t i = 0; i < fNRawData; i++) {
+        EventData& eventdata = fRawData[i];
 
-        UInt_t res = (UInt_t) eventdata.Data[kCutID];
-        // const UInt_t KineID = res / (NSieveRow * NSieveCol * NFoils); //starting 0!
-        res = res % (NSieveRow * NSieveCol * NFoils);
-        const UInt_t FoilID = res / (NSieveRow * NSieveCol); //starting 0!
+        Int_t res = eventdata.Data[kCutID];
+        Int_t PlotID = res / (NSieveRow * NSieveCol * NFoils); //starting 0!
 
-        HTgY[FoilID]->Fill(eventdata.Data[kCalcY]);
-        HTgYReal[FoilID]->Fill(eventdata.Data[kRealY]);
+        assert(PlotID < NKines); //array index check
+        if (NPlots == 1) PlotID = 0;
+
+        HTgY[PlotID]->Fill(eventdata.Data[kCalcY]);
+        HTgYReal[PlotID]->Fill(eventdata.Data[kRealY]);
+        HTgYDiff[PlotID]->Fill(eventdata.Data[kCalcY] - eventdata.Data[kRealY]);
 
         dy += eventdata.Data[kCalcY] - eventdata.Data[kRealY];
-        dy_rms += (eventdata.Data[kCalcY] - eventdata.Data[kRealY])*(eventdata.Data[kCalcY] - eventdata.Data[kRealY]);
+        rmsy += (eventdata.Data[kCalcY] - eventdata.Data[kRealY])*(eventdata.Data[kCalcY] - eventdata.Data[kRealY]);
     }
 
-    DEBUG_INFO("CheckTgY", "dtg_v = %f,\t dtg_v_rms = %f", dy / fNRawData, dy_rms / fNRawData);
+    DEBUG_INFO("CheckTgY", "dy = %f,\t rmsy = %f", dy / fNRawData, rmsy / fNRawData);
 
-    TCanvas * c1;
-    if (nplot <= 3) {
-        c1 = new TCanvas("CheckTgY", "Target Y Check", 1800, 450);
-        c1->Divide(3, 1);
-    } else if (nplot <= 6) {
-        c1 = new TCanvas("CheckTgY", "Target Y Check", 1800, 900);
-        c1->Divide(3, 2);
+    TCanvas *c1, *c2;
+    Double_t w = 720, h = 480;
+    Int_t splitw = 1, splith = 1;
+    if (NPlots == 1) {
+        c1 = new TCanvas("YCheck", "YCheck", w, h);
+        c2 = new TCanvas("YDiff", "YDiff", w, h);
     } else {
-        c1 = new TCanvas("CheckTgY", "Target Y Check", 1800, 1350);
-        c1->Divide(3, 3);
+        if (NKines <= 2) {
+            w = 720;
+            h = 960;
+            splitw = 1;
+            splith = 2;
+        } else if (NKines <= 4) {
+            w = 1440;
+            h = 960;
+            splitw = 2;
+            splith = 2;
+        } else if (NKines <= 6) {
+            w = 1440;
+            h = 640;
+            splitw = 3;
+            splith = 2;
+        } else if (NKines <= 9) {
+            w = 1440;
+            h = 960;
+            splitw = 3;
+            splith = 3;
+        } else if (NKines <= 12) {
+            w = 1440;
+            h = 720;
+            splitw = 4;
+            splith = 3;
+        }
+        c1 = new TCanvas("YCheck", "YCheck", w, h);
+        c1->Divide(splitw, splith);
+        c2 = new TCanvas("YDiff", "YDiff", w, h);
+        c2->Divide(splitw, splith);
     }
 
-    Double_t MaxPlot = 20000.0;
-    for (UInt_t idx = 0; idx < nplot; idx++) {
-        // UInt_t FoilID = idx;
+    for (Int_t i = 0; i < NPlots; i++) {
+        c1->cd(i + 1);
 
-        c1->cd(idx + 1);
-        assert(HTgY[idx]);
+        assert(HTgY[i]);
+        HTgYReal[i]->SetLineColor(kRed);
+        HTgYReal[i]->Draw();
+        HTgY[i]->SetLineColor(kBlack);
+        HTgY[i]->Draw("same");
 
-        HTgY[idx]->Draw();
+        c2->cd(i + 1);
 
-        Double_t mean = HTgYReal[idx]->GetMean();
-        TLine *l = new TLine(mean, 0, mean, MaxPlot);
-        l->SetLineColor(kRed);
-        l->SetLineWidth(2);
-        l->Draw();
+        assert(HTgYDiff[i]);
+        HTgYDiff[i]->Draw();
 
         Double_t DefResolution = 0.5e-3;
-        Double_t FitRangeMultiply = 5;
+        Double_t FitRangeMultiply = 10;
 
-        TString FitFunc = Form("YtPeak%d", idx);
-        TF1 *f = new TF1(FitFunc, "gaus+[3]", mean - DefResolution*FitRangeMultiply, mean + DefResolution * FitRangeMultiply);
-        f->SetParameter(1, mean);
+        TString FitFunc = Form("YDiff%d", i);
+        TF1 *f = new TF1(FitFunc, "gaus+[3]", -DefResolution*FitRangeMultiply, DefResolution * FitRangeMultiply);
+        f->SetParameter(1, 0.0);
         f->SetParameter(2, DefResolution);
-        HTgY[idx] -> Fit(FitFunc, "RN0");
+        HTgYDiff[i] -> Fit(FitFunc, "RN0");
         f->SetLineColor(2);
-        f->Draw("SAME");
+        f->Draw("same");
 
-        TLatex *t = new TLatex(f->GetParameter(1) + DefResolution, f->GetParameter(0) + f->GetParameter(3), Form("\\Delta \\pm \\sigma = (%2.1f \\pm %2.1f) mm", 1000 * (f->GetParameter(1) - mean), 1000 * (f->GetParameter(2))));
+        TLatex *t = new TLatex(f->GetParameter(1) + DefResolution, f->GetParameter(0) + f->GetParameter(3), Form("\\Delta \\pm \\sigma = (%2.1f \\pm %2.1f) mm", 1000 * f->GetParameter(1), 1000 * (f->GetParameter(2))));
         t->SetTextSize(0.05);
         t->SetTextAlign(12);
         t->SetTextColor(2);
         t->Draw();
     }
 
-    return c1;
+    TList* l = new TList();
+    l->Add(c1);
+    l->Add(c2);
+
+    return l;
 }
 
 void LOpticsOpt::PrepareDp(void)
@@ -1312,20 +1380,20 @@ void LOpticsOpt::PrepareDp(void)
     // calculate expected dp_kin, dp_kin offsets ....
 
     // print Central Momentums
-    printf("HRSCentralMom[%d] (GeV) = { ", NKine);
-    for (UInt_t KineID = 0; KineID < NKine; KineID++)
+    printf("HRSCentralMom[%d] (GeV) = { ", NKines);
+    for (Int_t KineID = 0; KineID < NKines; KineID++)
         printf("%f ", HRSCentralMom[KineID]);
     printf("}\n");
 
     // print radiation loss numbers
     printf("RadiationLossByFoil[%d] (MeV) = { ", NFoils);
-    for (UInt_t FoilID = 0; FoilID < NFoils; FoilID++)
+    for (Int_t FoilID = 0; FoilID < NFoils; FoilID++)
         printf("%f ", RadiationLossByFoil[FoilID]*1000);
     printf("}\n");
 
     // print tilt angle
-    printf("TiltAngleBySetting[%d] (deg) = { ", NFoils * NKine);
-    for (UInt_t i = 0; i < NFoils * NKine; i++)
+    printf("TiltAngleBySetting[%d] (deg) = { ", NFoils * NKines);
+    for (Int_t i = 0; i < NFoils * NKines; i++)
         printf("%f ", TiltAngle[i]*180.0 / TMath::Pi());
     printf("}\n");
 
@@ -1333,20 +1401,20 @@ void LOpticsOpt::PrepareDp(void)
     Double_t dpkinoff = 0, rmsdpkinoff = 0;
     Double_t exttargcorr_dp = 0, rms_exttargcorr_dp = 0;
 
-    for (UInt_t idx = 0; idx < fNRawData; idx++) {
-        DEBUG_MASSINFO("PrepareDp", "=========== Event %d ===========", idx);
+    for (Int_t i = 0; i < fNRawData; i++) {
+        DEBUG_MASSINFO("PrepareDp", "=========== Event %d ===========", i);
 
-        EventData &eventdata = fRawData[idx];
+        EventData& eventdata = fRawData[i];
 
-        UInt_t res = (UInt_t) eventdata.Data[kCutID];
-        const UInt_t KineID = res / (NSieveRow * NSieveCol * NFoils); //starting 0!
+        Int_t res = eventdata.Data[kCutID];
+        const Int_t KineID = res / (NSieveRow * NSieveCol * NFoils); //starting 0!
         res = res % (NSieveRow * NSieveCol * NFoils);
-        const UInt_t FoilID = res / (NSieveRow * NSieveCol); //starting 0!
+        const Int_t FoilID = res / (NSieveRow * NSieveCol); //starting 0!
         res = res % (NSieveRow * NSieveCol);
-        const UInt_t Col = res / (NSieveRow); //starting 0!
-        const UInt_t Row = res % (NSieveRow); //starting 0!
+        const Int_t Col = res / (NSieveRow); //starting 0!
+        const Int_t Row = res % (NSieveRow); //starting 0!
 
-        assert(KineID < NKine); //check array index size
+        assert(KineID < NKines); //check array index size
         assert(FoilID < NFoils); //check array index size
 
         // write some variables
@@ -1410,8 +1478,8 @@ void LOpticsOpt::PrepareDp(void)
         rms_exttargcorr_dp += (x_tg / ExtTarCor_DeltaCorr)*(x_tg / ExtTarCor_DeltaCorr);
 
         // calculate expected dp_kin for all other excitation states
-        for (UInt_t ExcitID = 0; ExcitID < NExcitationStates; ExcitID++) {
-            assert(kRealDpKinExcitations + ExcitID < MaxNEventData); //check array index size
+        for (Int_t ExcitID = 0; ExcitID < NExcitationStates; ExcitID++) {
+            assert(kRealDpKinExcitations + ExcitID < kMaxNEventData); //check array index size
             eventdata.Data[kRealDpKinExcitations + ExcitID] = ScatMom(ExcitationEnergyList[ExcitID], Ma, P0, TMath::Abs(HRSAngle)) / eventdata.Data[kCentralp] - 1;
         }
 
@@ -1437,13 +1505,13 @@ Double_t LOpticsOpt::SumSquareDp(Int_t UseFPOff)
     Double_t ddp = 0; //Difference
     Double_t rmsdp = 0; //mean square
 
-    static UInt_t NCall = 0;
+    static Int_t NCall = 0;
     NCall++;
 
     Double_t dp, dp_kin;
 
-    for (UInt_t idx = 0; idx < fNRawData; idx++) {
-        EventData &eventdata = fRawData[idx];
+    for (Int_t i = 0; i < fNRawData; i++) {
+        EventData &eventdata = fRawData[i];
 
         Double_t(*powers)[5] = eventdata.powers;
 
@@ -1457,7 +1525,7 @@ Double_t LOpticsOpt::SumSquareDp(Int_t UseFPOff)
             eventdata.Data[kRotPh] = rot[3];
 
             // calculate the powers we need
-            for (int i = 0; i < kNUM_PRECOMP_POW; i++) {
+            for (Int_t i = 0; i < kPreCalPow; i++) {
                 powers[i][0] = pow(rot[0], i);
                 powers[i][1] = pow(rot[1], i);
                 powers[i][2] = pow(rot[2], i);
@@ -1480,8 +1548,8 @@ Double_t LOpticsOpt::SumSquareDp(Int_t UseFPOff)
         dp = CalcTargetVar(fDMatrixElems, powers);
         dp_kin = dp - eventdata.Data[kDpKinOffsets];
 
-        const UInt_t KineID = (UInt_t) (eventdata.Data[kKineID]);
-        assert(KineID < NKine); //check array index size
+        const Int_t KineID = (eventdata.Data[kKineID]);
+        assert(KineID < NKines); //check array index size
         const Double_t ArbitaryDpKinShift = fArbitaryDpKinShift[KineID];
 
         ddp += dp_kin - eventdata.Data[kRealDpKinMatrix] + ArbitaryDpKinShift;
@@ -1499,220 +1567,163 @@ Double_t LOpticsOpt::SumSquareDp(Int_t UseFPOff)
     return rmsdp;
 }
 
-TCanvas * LOpticsOpt::CheckDp()
+TList* LOpticsOpt::CheckDp(Int_t PlotType)
 {
     // Visualize 1D hitogram of dp_kin
+    assert(NKines <= 12);
 
     const Double_t DpRange = .05;
-    const UInt_t NDpRange = 5000;
+    const Int_t NDpRange = 5000;
 
-    TH1D * hDpKinCalib[NKine];
-    TH1D * hDpKinAll[NKine];
-    Double_t RealDpKin[NKine] = {0};
-    Double_t AverCalcDpKin[NKine] = {0};
-    UInt_t NEvntDpKin[NKine] = {0};
-    Double_t RealDpKinAllExcit[NExcitationStates][NKine] = {
-        {0}
-    };
-    Double_t NewArbitaryDpKinShift[NKine];
+    TH1D * hDpKinAll[NKines];
+    memset(hDpKinAll, 0, sizeof (hDpKinAll));
+    Double_t RealDpKin[NKines];
+    memset(RealDpKin, 0, sizeof (RealDpKin));
+    Double_t AverCalcDpKin[NKines];
+    memset(AverCalcDpKin, 0, sizeof (AverCalcDpKin));
+    Int_t NEvntDpKin[NKines];
+    memset(NEvntDpKin, 0, sizeof (NEvntDpKin));
+    Double_t RealDpKinAllExcit[NExcitationStates][NKines];
+    memset(RealDpKinAllExcit, 0, sizeof (RealDpKinAllExcit));
+    Double_t NewArbitaryDpKinShift[NKines];
+    memset(NewArbitaryDpKinShift, 0, sizeof (NewArbitaryDpKinShift));
 
-    for (UInt_t KineID = 0; KineID < NKine; KineID++) {
-        hDpKinCalib[KineID] = new TH1D(Form("hDpKinCalib%d", KineID), Form("Dp_Kin for Delta Scan Kine. #%d (Selected Exct. State)", KineID), NDpRange, -DpRange, DpRange);
+    for (Int_t KineID = 0; KineID < NKines; KineID++) {
         hDpKinAll[KineID] = new TH1D(Form("hDpKinAll%d", KineID), Form("Dp_Kin for Delta Scan Kine. #%d (All Data)", KineID), NDpRange, -DpRange, DpRange);
-
-        assert(hDpKinCalib[KineID]); //pointer check
         assert(hDpKinAll[KineID]); //pointer check
     }
 
-    for (UInt_t idx = 0; idx < fNRawData; idx++) {
-        const EventData &eventdata = fRawData[idx];
+    for (Int_t i = 0; i < fNRawData; i++) {
+        const EventData& eventdata = fRawData[i];
 
-        const UInt_t KineID = (UInt_t) (eventdata.Data[kKineID]);
-        assert(KineID < NKine);
+        const Int_t KineID = eventdata.Data[kKineID];
+        assert(KineID < NKines);
 
-        hDpKinCalib[KineID]->Fill(eventdata.Data[kCalcDpKin] + eventdata.Data[kRadiLossDp]);
-        AverCalcDpKin[KineID] += eventdata.Data[kCalcDpKin] + eventdata.Data[kRadiLossDp];
         NEvntDpKin[KineID]++;
 
         hDpKinAll[KineID]->Fill(eventdata.Data[kCalcDpKin] + eventdata.Data[kRadiLossDp]);
-
-        RealDpKin[KineID] = eventdata.Data[kRealDpKin] + eventdata.Data[kRadiLossDp];
-
-        for (UInt_t ExcitID = 0; ExcitID < NExcitationStates; ExcitID++) {
-            assert(kRealDpKinExcitations + ExcitID < MaxNEventData); //index check
-            RealDpKinAllExcit[ExcitID][KineID] = eventdata.Data[kRealDpKinExcitations + ExcitID];
+        AverCalcDpKin[KineID] += eventdata.Data[kCalcDpKin] + eventdata.Data[kRadiLossDp];
+        RealDpKin[KineID] += eventdata.Data[kRealDpKin] + eventdata.Data[kRadiLossDp];
+        for (Int_t ExcitID = 0; ExcitID < NExcitationStates; ExcitID++) {
+            assert(kRealDpKinExcitations + ExcitID < kMaxNEventData); //index check
+            RealDpKinAllExcit[ExcitID][KineID] += eventdata.Data[kRealDpKinExcitations + ExcitID];
         }
     }
 
-    TCanvas * c1 = new TCanvas("CheckDp", "Check Dp Kin Reconstruction", 1800, 900);
+    TCanvas *c1;
+    Double_t w = 720, h = 480;
+    Int_t splitw = 1, splith = 1;
+    if (NKines <= 1) {
+        c1 = new TCanvas("CheckDp", "Check Dp Kin Reconstruction", w, h);
+    } else {
+        if (NKines <= 2) {
+            w = 720;
+            h = 960;
+            splitw = 1;
+            splith = 2;
+        } else if (NKines <= 4) {
+            w = 1440;
+            h = 960;
+            splitw = 2;
+            splith = 2;
+        } else if (NKines <= 6) {
+            w = 1440;
+            h = 640;
+            splitw = 3;
+            splith = 2;
+        } else if (NKines <= 9) {
+            w = 1440;
+            h = 960;
+            splitw = 3;
+            splith = 3;
+        } else if (NKines <= 12) {
+            w = 1440;
+            h = 720;
+            splitw = 4;
+            splith = 3;
+        }
+        c1 = new TCanvas("CheckDp", "Check Dp Kin Reconstruction", w, h);
+        c1->Divide(splitw, splith);
+    }
+    TCanvas* c2 = new TCanvas("CheckDpGlobal", "Check Dp Kin Reconstruction", 720, 480);
 
-    if (NKine <= 3)
-        c1->Divide(3, 1);
-    else if (NKine <= 6)
-        c1->Divide(3, 2);
-    else
-        c1->Divide(3, 3);
-
-    UInt_t idx = 1;
-
-    for (UInt_t KineID = 0; KineID < NKine; KineID++) {
-        c1->cd(idx++);
+    for (Int_t i = 0; i < NKines; i++) {
+        c1->cd(i + 1);
         gPad -> SetLogy();
 
-        AverCalcDpKin[KineID] /= NEvntDpKin[KineID];
-        DEBUG_MASSINFO("CheckDp", "AverCalcDpKin[%d] = %f", KineID, AverCalcDpKin[KineID]);
+        AverCalcDpKin[i] /= NEvntDpKin[i];
+        RealDpKin[i] /= NEvntDpKin[i];
+        DEBUG_MASSINFO("CheckDp", "AverCalcDpKin[%d] = %f", i, AverCalcDpKin[i]);
 
         // Histograms
-        hDpKinCalib[KineID]->SetLineColor(4);
-        hDpKinCalib[KineID]->SetFillColor(4);
-        hDpKinCalib[KineID]->SetFillStyle(3008);
-
-        hDpKinAll[KineID]->SetLineColor(1);
-        // hDpKinAll[KineID]->SetFillColor(1);
+        hDpKinAll[i]->SetLineColor(4);
+        hDpKinAll[i]->SetFillColor(4);
+        hDpKinAll[i]->SetFillStyle(3008);
 
         const Double_t dpRange = 0.01;
-        hDpKinCalib[KineID]-> SetAxisRange(RealDpKin[KineID] - dpRange, RealDpKin[KineID] + dpRange);
-        hDpKinAll[KineID]->SetAxisRange(RealDpKin[KineID] - dpRange, RealDpKin[KineID] + dpRange);
+        hDpKinAll[i]->SetAxisRange(RealDpKin[i] - dpRange, RealDpKin[i] + dpRange);
+        hDpKinAll[i]->SetXTitle("radiation corrected dp_kin (angular independent dp)");
+        hDpKinAll[i]->Draw();
 
-        hDpKinCalib[KineID]->SetXTitle("radiation corrected dp_kin (angular independent dp)");
-        hDpKinAll[KineID]->SetXTitle("radiation corrected dp_kin (angular independent dp)");
+        if (i == 0) {
+            TH1D * temp = static_cast<TH1D*> (hDpKinAll[i]->Clone());
+            temp->SetAxisRange(-0.04, 0.04);
+            c2->cd();
+            temp->Draw();
+        } else {
+            c2->cd();
+            hDpKinAll[i]->Draw("same");
+        }
 
-        hDpKinAll[KineID]->Draw();
-        hDpKinCalib[KineID]->Draw("SAME");
-
+        c1->cd(i + 1);
         // expectation lines
-        const Double_t MaxPlot = 20000;
-        for (UInt_t ExcitID = 0; ExcitID < NExcitationStates; ExcitID++) {
-            const Double_t x = RealDpKinAllExcit[ExcitID][KineID];
-            TLine *l = new TLine(x, 0, x, +MaxPlot);
+        for (Int_t ExcitID = 0; ExcitID < NExcitationStates; ExcitID++) {
+            RealDpKinAllExcit[ExcitID][i] /= NEvntDpKin[i];
+            const Double_t x = RealDpKinAllExcit[ExcitID][i];
+            TLine *l = new TLine(x, 0, x, 20000);
             l->SetLineColor(3);
             l->SetLineWidth(2);
             l->Draw();
         }
-        TLine *l = new TLine(RealDpKin[KineID], 0, RealDpKin[KineID], +MaxPlot);
+        TLine *l = new TLine(RealDpKin[i], 0, RealDpKin[i], 20000);
         l->SetLineColor(6);
         l->SetLineWidth(2);
         l->Draw();
+        c2->cd();
+        l->Draw();
+
+        c1->cd(i + 1);
 
         // Fits
         const Double_t DefResolution = 1e-4;
         const Double_t FitRangeMultiply = 5;
 
-        TString FitFunc = Form("DpPeak%d", KineID);
-        TF1 *f = new TF1(FitFunc, "gaus+[3]+[4]*x", AverCalcDpKin[KineID] - DefResolution*FitRangeMultiply, AverCalcDpKin[KineID] + DefResolution * FitRangeMultiply);
-        f->SetParameter(1, AverCalcDpKin[KineID]);
+        TString FitFunc = Form("DpPeak%d", i);
+        TF1 *f = new TF1(FitFunc, "gaus+[3]+[4]*x", AverCalcDpKin[i] - DefResolution*FitRangeMultiply, AverCalcDpKin[i] + DefResolution * FitRangeMultiply);
+        f->SetParameter(1, AverCalcDpKin[i]);
         f->SetParameter(2, DefResolution);
-        hDpKinAll[KineID] -> Fit(FitFunc, "RN0");
-        // Info("CheckDp","Fit for delta scan #%d peak:",KineID);
-        // f->Print();
+        hDpKinAll[i] -> Fit(FitFunc, "RN0");
         f->SetLineColor(2);
         f->Draw("SAME");
 
-        TLatex *t = new TLatex(f->GetParameter(1) + DefResolution, f->GetParameter(0) + f->GetParameter(3) + f->GetParameter(4) * f->GetParameter(1), Form("\\Delta \\pm \\sigma = (%2.1f \\pm %2.1f) \\times 10^{-4}", 10000 * (f->GetParameter(1) - RealDpKin[KineID]), 10000 * f->GetParameter(2)));
+        TLatex *t = new TLatex(f->GetParameter(1) + DefResolution, f->GetParameter(0) + f->GetParameter(3) + f->GetParameter(4) * f->GetParameter(1), Form("\\Delta \\pm \\sigma = (%2.1f \\pm %2.1f) \\times 10^{-4}", 10000 * (f->GetParameter(1) - RealDpKin[i]), 10000 * f->GetParameter(2)));
         t->SetTextSize(0.05);
         t->SetTextAlign(12);
         t->SetTextColor(2);
         t->Draw();
 
-        NewArbitaryDpKinShift[KineID] = f->GetParameter(1) - RealDpKin[KineID] + fArbitaryDpKinShift[KineID];
+        NewArbitaryDpKinShift[i] = f->GetParameter(1) - RealDpKin[i] + fArbitaryDpKinShift[i];
     }
 
     Info("CheckDp", "New set of arbitary dp shifts:");
-    for (UInt_t KineID = 0; KineID < NKine; KineID++)
-        printf("opt->fArbitaryDpKinShift[%d] = %e;\n", KineID, NewArbitaryDpKinShift[KineID]);
+    for (Int_t i = 0; i < NKines; i++)
+        printf("opt->fArbitaryDpKinShift[%d] = %e;\n", i, NewArbitaryDpKinShift[i]);
 
-    return c1;
-}
+    TList* l = new TList();
+    l->Add(c1);
+    l->Add(c2);
 
-TCanvas * LOpticsOpt::CheckDpGlobal()
-{
-    // Visualize 1D hitogram of dp_kin
-
-    const Double_t DpRange = .05;
-    const UInt_t NDpRange = 5000;
-
-    TH1D * hDpKinCalib[NKine];
-    TH1D * hDpKinAll[NKine];
-    Double_t RealDpKin[NKine] = {0};
-    Double_t AverCalcDpKin[NKine] = {0};
-    UInt_t NEvntDpKin[NKine] = {0};
-    Double_t RealDpKinAllExcit[NExcitationStates][NKine] = {
-        {0}
-    };
-
-    for (UInt_t KineID = 0; KineID < NKine; KineID++) {
-        hDpKinCalib[KineID] = new TH1D(Form("hDpKinCalib%d", KineID), "Dp_Kin for Delta Scan", NDpRange, -DpRange, DpRange);
-        hDpKinAll[KineID] = new TH1D(Form("hDpKinAll%d", KineID), Form("Dp_Kin for Delta Scan Kine. #%d", KineID), NDpRange, -DpRange, DpRange);
-
-        assert(hDpKinCalib[KineID]); //pointer check
-        assert(hDpKinAll[KineID]); //pointer check
-    }
-
-    for (UInt_t idx = 0; idx < fNRawData; idx++) {
-        const EventData &eventdata = fRawData[idx];
-
-        const UInt_t KineID = (UInt_t) (eventdata.Data[kKineID]);
-        assert(KineID < NKine);
-
-        hDpKinCalib[KineID]->Fill(eventdata.Data[kCalcDpKin] + eventdata.Data[kRadiLossDp]);
-        AverCalcDpKin[KineID] += eventdata.Data[kCalcDpKin] + eventdata.Data[kRadiLossDp];
-        NEvntDpKin[KineID]++;
-
-        hDpKinAll[KineID]->Fill(eventdata.Data[kCalcDpKin] + eventdata.Data[kRadiLossDp]);
-
-        RealDpKin[KineID] = eventdata.Data[kRealDpKin] + eventdata.Data[kRadiLossDp];
-
-        for (UInt_t ExcitID = 0; ExcitID < NExcitationStates; ExcitID++) {
-            assert(kRealDpKinExcitations + ExcitID < MaxNEventData); //index check
-            RealDpKinAllExcit[ExcitID][KineID] = eventdata.Data[kRealDpKinExcitations + ExcitID];
-        }
-    }
-
-    TCanvas * c1 = new TCanvas("CheckDp", "Check Dp Kin Reconstruction", 1800, 900);
-
-    for (UInt_t KineID = 0; KineID < NKine; KineID++) {
-        c1->cd();
-        // gPad -> SetLogy();
-
-        AverCalcDpKin[KineID] /= NEvntDpKin[KineID];
-        DEBUG_MASSINFO("CheckDp", "AverCalcDpKin[%d] = %f", KineID, AverCalcDpKin[KineID]);
-
-        // Histograms
-        hDpKinCalib[KineID]->SetLineColor(4);
-        hDpKinCalib[KineID]->SetFillColor(4);
-        hDpKinCalib[KineID]->SetFillStyle(3008);
-
-        hDpKinAll[KineID]->SetLineColor(1);
-        // hDpKinAll[KineID]->SetFillColor(1);
-
-        if (KineID == 0) {
-            const Double_t dpRange = 0.04;
-            hDpKinCalib[KineID]->SetAxisRange(-dpRange, +dpRange);
-            hDpKinAll[KineID]->SetAxisRange(RealDpKin[KineID] - dpRange, RealDpKin[KineID] + dpRange);
-
-            hDpKinCalib[KineID]->SetXTitle("dp_kin (energy loss corrected)");
-
-            hDpKinCalib[KineID]->Draw();
-        } else {
-            hDpKinCalib[KineID]->Draw("same");
-        }
-
-        // expectation lines
-        const Double_t MaxPlot = 20000;
-        for (UInt_t ExcitID = 0; ExcitID < NExcitationStates; ExcitID++) {
-            const Double_t x = RealDpKinAllExcit[ExcitID][KineID];
-            TLine *l = new TLine(x, 0, x, +MaxPlot);
-            l->SetLineColor(3);
-            l->SetLineWidth(2);
-            l->Draw();
-        }
-        TLine *l = new TLine(RealDpKin[KineID], 0, RealDpKin[KineID], +MaxPlot);
-        l->SetLineColor(6);
-        l->SetLineWidth(2);
-        l->Draw();
-    }
-
-    return c1;
+    return l;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1730,7 +1741,7 @@ void LOpticsOpt::CalcMatrix(const Double_t x, vector<THaMatrixElement>& matrix)
         it->v = 0.0;
 
         if (it->order > 0) {
-            for (int i = it->order - 1; i >= 1; i--)
+            for (Int_t i = it->order - 1; i >= 1; i--)
                 it->v = x * (it->v + it->poly[i]);
             it->v += it->poly[0];
         }
@@ -1741,37 +1752,70 @@ Double_t LOpticsOpt::CalcTargetVar(const vector<THaMatrixElement>& matrix, const
 {
     // calculates the value of a variable at the target
     // the x-dependence is already in the matrix, so only 1-3 (or np) used
+
+    typedef vector<Int_t>::size_type vsiz_t;
+
     Double_t retval = 0.0;
     Double_t v = 0;
     for (vector<THaMatrixElement>::const_iterator it = matrix.begin();
             it != matrix.end(); it++)
         if (it->v != 0.0) {
             v = it->v;
-            unsigned int np = it->pw.size(); // generalize for extra matrix elems.
-            for (unsigned int i = 0; i < np; i++)
+            vsiz_t np = it->pw.size(); // generalize for extra matrix elems.
+
+            for (vsiz_t i = 0; i < np; i++)
                 v *= powers[it->pw[i]][i + 1];
             retval += v;
-            //      retval += it->v * powers[it->pw[0]][1]
-            //	              * powers[it->pw[1]][2]
-            //	              * powers[it->pw[2]][3];
         }
 
     return retval;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// Inherited from THaTrackingDetector
+///////////////////////////////////////////////////////////////////////////////
+
+Int_t LOpticsOpt::Decode(const THaEvData&)
+{
+
+    return 0;
+}
+
+Int_t LOpticsOpt::CoarseTrack(TClonesArray&)
+{
+
+    return 0;
+}
+
+Int_t LOpticsOpt::FineTrack(TClonesArray&)
+{
+
+    return 0;
+}
+
+THaAnalysisObject::EStatus LOpticsOpt::Init(const TDatime&)
+{
+
+    return fStatus = kOK;
+};
+
+///////////////////////////////////////////////////////////////////////////////
 // class for storing matrix element data
 ///////////////////////////////////////////////////////////////////////////////
 
-bool THaMatrixElement::match(const THaMatrixElement& rhs) const
+THaMatrixElement::THaMatrixElement() : iszero(kTRUE), pw(3), order(0), v(0), poly(LOpticsOpt::kPORDER), OptOrder(0)
+{
+    // Nothing to be done
+}
+
+Bool_t THaMatrixElement::match(const THaMatrixElement& rhs) const
 {
     // Compare coefficients of this matrix element to another
 
     if (pw.size() != rhs.pw.size())
         return false;
-    for (vector<int>::size_type i = 0; i < pw.size(); i++) {
-        if (pw[i] != rhs.pw[i])
-            return false;
+    for (vector<Int_t>::size_type i = 0; i < pw.size(); i++) {
+        if (pw[i] != rhs.pw[i]) return false;
     }
     return true;
 }

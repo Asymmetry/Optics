@@ -8,6 +8,8 @@
 
 using namespace std;
 
+const TString User = "Chao Gu";
+
 const TString InputID = "G2P_LHRS";
 
 /////////////////////////////////////////////////////////////////////////
@@ -30,10 +32,10 @@ const Double_t BeamShiftX = 0.0;
 /////////////////////////////////////////////////////////////////////////
 // Sieve Position Inputs
 const Double_t SieveYbyCol[] = {3 * 6.1214e-3, 2 * 6.1214e-3, 1 * 6.1214e-3, 0.0, -1 * 4.7752e-3, -2 * 4.7752e-3, -3 * 4.7752e-3, 1e36};
-const UInt_t NSieveCol = 7; // WARNING: 7
+const Int_t NSieveCol = 7; // WARNING: 7
 
 const Double_t SieveXbyRow[] = {-3 * 13.3096e-3, -2 * 13.3096e-3, -1 * 13.3096e-3, 0.0, 1 * 13.3096e-3, 2 * 13.3096e-3, 3 * 13.3096e-3, 1e36};
-const UInt_t NSieveRow = 7; // WARNING: 7
+const Int_t NSieveRow = 7; // WARNING: 7
 
 // SieveOff* are in TCS
 const Double_t SieveOffY = 0.; //(2.97*cos(HRSAngle)).
@@ -42,12 +44,12 @@ const Double_t ZPos = 799.60 * 1e-3; //800.
 
 /////////////////////////////////////////////////////////////////////////
 // Vertex Position Inputs
-static const UInt_t NFoils = 2; // WARNING: check
-const Double_t targetfoils[] = {-13.6271 * 1e-3, -13.6271 * 1e-3, 1e36}; // At end-cap, not target ladder -10.81mm
+static const Int_t NFoils = 2; // WARNING: check
+const Double_t targetfoils[] = {-13.6271 * 1e-3, -454.279 * 1e-3, 1e36}; // At end-cap, not target ladder -10.81mm
 
 /////////////////////////////////////////////////////////////////////////
 // Excitation State Inputs
-const UInt_t NKine = 5; // N Delta Scans
+const Int_t NKines = 5; // N Delta Scans
 
 #define DIPOLE_MAG2MOM(Mag) (2.702*(Mag)-1.6e-03*(Mag)*(Mag)*(Mag))
 const Double_t HRSCentralMom[] = {
@@ -63,7 +65,7 @@ const Double_t GroundNuclearMass = 12.0107 * .931494028; // GeV/c^2  // Carbon T
 const Double_t ExcitationEnergy[] = {0., 0., 0., 0., 0.}; // selected excitation states for each kinematics
 // {0., 0.00443891, 0.00443891, 0.00443891, 0.00443891};
 
-const UInt_t NExcitationStates = 1; // C Excitation States
+const Int_t NExcitationStates = 1; // C Excitation States
 const Double_t ExcitationEnergyList[] = {0};
 // {0., 0.00443891, 0.00765420, 0.009641, 0.010844, 0.011160, 0.011828, 0.012710};
 
@@ -86,7 +88,7 @@ const Double_t RadiationLossByFoil[] = {
 
 /////////////////////////////////////////////////////////////////////////
 // g2p only settings
-const Bool_t TargetField = false;
+const Bool_t TargetField = kFALSE;
 
 const Double_t TiltAngle[] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1e36}; // NFoils x NKines
 
@@ -98,15 +100,15 @@ const Double_t ExtTarCor_DeltaCorr = 1e36;
 
 /////////////////////////////////////////////////////////////////////////
 // Database header
-const char * Prefix = "L.vdc.";
+const Char_t* Prefix = "L.vdc.";
 
-const char * DatabaseHeader = "\
+const Char_t* DatabaseHeader = "\
 [ L.global ]   \n\
 0.3327 1 0.0 270.2 0.0 -1.6e-03        VDC Angle, Plane Spacing, Gamma Coefficents  \n\
 matrix elements   \n\
 ";
 
-const char * DatabaseFooter = "\
+const Char_t* DatabaseFooter = "\
 L 0 0 0 0  25.713\n\
 L 1 0 0 0  0.1650\n\
 L 2 0 0 0 -0.05\n\

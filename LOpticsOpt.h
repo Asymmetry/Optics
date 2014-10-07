@@ -11,6 +11,7 @@
 //   For Momentums, Masses                   -  GeV, GeV/c^2
 //
 // Author: Jin Huang <jinhuang@jlab.org>
+//         Chao Gu <cg2ja@jlab.org>
 //
 // Modification:
 //   Jun 25, 2010 Updated for APEX optics calibration
@@ -23,11 +24,11 @@
 
 #include <vector>
 
-#include "TRotation.h"
 #include "TMath.h"
+#include "TString.h"
+#include "TRotation.h"
 
 #include "THaTrackingDetector.h"
-#include "THaString.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Debug Definitions
@@ -47,12 +48,12 @@
 #include "DebugDef.h"
 
 ///////////////////////////////////////////////////////////////////////////////
-class TCanvas;
-class THaTrack;
 class TClonesArray;
+class TList;
 class TTree;
 class TVector3;
 
+class THaEvData;
 class THaMatrixElement;
 
 class LOpticsOpt : public THaTrackingDetector {
@@ -69,36 +70,29 @@ public:
 
     virtual void Print(const Option_t* opt) const;
 
-    UInt_t Matrix2Array(Double_t Array[], Bool_t FreeParaFlag[] = NULL, Int_t UseFPOff = 0) // fCurrentMatrixElems -> Array
-    {
-        assert(fCurrentMatrixElems);
-        return Matrix2Array(Array, (*fCurrentMatrixElems), FreeParaFlag, UseFPOff);
-    }
-    UInt_t Matrix2Array(Double_t Array[], const std::vector<THaMatrixElement> &Matrix, Bool_t FreeParaFlag[] = NULL, Int_t UseFPOff = 0);
+    Int_t Matrix2Array(Double_t Array[], Bool_t FreeParaFlag[] = NULL, Int_t UseFPOff = 0); // fCurrentMatrixElems -> Array
+    Int_t Matrix2Array(Double_t Array[], const std::vector<THaMatrixElement>& Matrix, Bool_t FreeParaFlag[] = NULL, Int_t UseFPOff = 0);
 
-    UInt_t Array2Matrix(const Double_t Array[], Int_t UseFPOff = 0) // Array -> fCurrentMatrixElems
-    {
-        assert(fCurrentMatrixElems);
-        return Array2Matrix(Array, (*fCurrentMatrixElems), UseFPOff);
-    }
-    UInt_t Array2Matrix(const Double_t Array[], std::vector<THaMatrixElement> &Matrix, Int_t UseFPOff = 0);
+    Int_t Array2Matrix(const Double_t Array[], Int_t UseFPOff = 0); // Array -> fCurrentMatrixElems
+    Int_t Array2Matrix(const Double_t Array[], std::vector<THaMatrixElement>& Matrix, Int_t UseFPOff = 0);
 
     ///////////////////////////////////////////////////////////////////////////
     // Data storage
     ///////////////////////////////////////////////////////////////////////////
     void DCS2FCS(const Double_t* det, Double_t* rot);
-    UInt_t LoadRawData(TString DataFileName, UInt_t NLoad = MaxNRawData, UInt_t MaxDataPerGroup = (UInt_t) - 1); // load data to Rawdata[]
 
     enum {
-        MaxNEventData = 50, MaxNRawData = 2000000, kNUM_PRECOMP_POW = 10, kMaxDataGroup = 180 * 5 * 5
+        kMaxNEventData = 50, kMaxNRawData = 2000000, kPreCalPow = 10, kMaxDataGroup = 12 * 12 * 7 * 7, kMaxDataPerGroup = 10000
     };
 
+    Int_t LoadRawData(TString DataFileName, Int_t NLoad = kMaxNRawData, Int_t MaxDataPerGroup = kMaxDataPerGroup); // load data to Rawdata[]
+
     typedef struct {
-        Double_t Data[MaxNEventData]; // [CommonIdx]
-        Double_t powers[kNUM_PRECOMP_POW][5]; // {(x), th, y, ph, abs(th) }
+        Double_t Data[kMaxNEventData]; // [CommonIdx]
+        Double_t powers[kPreCalPow][5]; // {(x), th, y, ph, abs(th) }
     } EventData;
-    EventData fRawData[MaxNRawData]; // [fNRawData]
-    UInt_t fNRawData;
+    EventData fRawData[kMaxNRawData]; // [fNRawData]
+    Int_t fNRawData;
 
     enum CommonIdx {
         kCutID = 0, // cut ID in order of tree2ascii cut file
@@ -155,53 +149,37 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     // Optimization related Commands
     ///////////////////////////////////////////////////////////////////////////
-    const TVector3 GetSieveHoleTCS(UInt_t Col, UInt_t Row);
+    const TVector3 GetSieveHoleTCS(Int_t Col, Int_t Row);
 
     void PrepareSieve(void);
     Double_t SumSquareDTh(Int_t UseFPOff = 0);
     Double_t SumSquareDPhi(Int_t UseFPOff = 0);
-    TCanvas* CheckSieve(Int_t PlotKine = 0, UInt_t PlotFoilID = 0);
+    TList* CheckSieve(Int_t PlotType = 0);
 
-    Double_t fArbitaryYShift[100]; // compensate bias due to event selections, array of [FoilID]
     void PrepareVertex(void);
     Double_t SumSquareDY(Int_t UseFPOff = 0);
-    TCanvas* CheckY(void);
+    TList* CheckY(Int_t PlotType = 0);
 
     Double_t fArbitaryDpKinShift[100]; // compensate bias due to dp event selections, array of [KineID]
     void PrepareDp(void);
     Double_t SumSquareDp(Int_t UseFPOff = 0);
-    TCanvas* CheckDp(void);
-    TCanvas* CheckDpGlobal(void);
+    TList* CheckDp(Int_t PlotType = 0);
 
     TRotation fTCSInHCS; // transformations vector from TCS to HCS
     TVector3 fPointingOffset; // Optical point in lab coordinate system
 
-    inline Double_t ScatMom(Double_t DM, Double_t Ma, Double_t P0, Double_t Theta)
-    {
-        // Calc Scattered Electron Momentum
-        // Assuming Electron with P0, Scattering on a fix target of Mass Ma Assuming
-        // recoil system is a resonance of DM and scattering angle is Theta.
-        return (-DM * DM - 2 * Ma * DM + 2 * Ma * P0) / (2 * (Ma + P0 - P0 * TMath::Cos(Theta)));
-    }
+    Double_t ScatMom(Double_t DM, Double_t Ma, Double_t P0, Double_t Theta);
 
     ///////////////////////////////////////////////////////////////////////////
     // declarations for target vertex reconstruction
     ///////////////////////////////////////////////////////////////////////////
-
-    enum ECoordTypes {
-        kTransport, kRotatingTransport
-    };
-
-    enum EFPMatrixElemTags {
-        T000 = 0, Y000, P000
-    };
 
     enum {
         kPORDER = 7
     };
 
     friend class THaMatrixElement;
-    std::vector<THaMatrixElement> * fCurrentMatrixElems;
+    std::vector<THaMatrixElement>* fCurrentMatrixElems;
     // initial matrix elements
     std::vector<THaMatrixElement> fTMatrixElems;
     std::vector<THaMatrixElement> fDMatrixElems;
@@ -212,34 +190,16 @@ public:
     std::vector<THaMatrixElement> fFPMatrixElems; // Focus Plane offsets
     std::vector<THaMatrixElement> fLMatrixElems; // Path-length corrections (meters)
 
-    void CalcMatrix(const double x, std::vector<THaMatrixElement> &matrix);
-    // Double_t DoPoly(const int n, const std::vector<double> &a, const double x);
-    // Double_t PolyInv(const double x1, const double x2, const double xacc, const double y, const int norder, const std::vector<double> &a);
-    Double_t CalcTargetVar(const std::vector<THaMatrixElement> &matrix, const double powers[][5]);
+    void CalcMatrix(const Double_t x, std::vector<THaMatrixElement> &matrix);
+    Double_t CalcTargetVar(const std::vector<THaMatrixElement> &matrix, const Double_t powers[][5]);
 
     ///////////////////////////////////////////////////////////////////////////
     // Inherited from THaTrackingDetector
     ///////////////////////////////////////////////////////////////////////////
-
-    virtual Int_t Decode(const THaEvData&)
-    {
-        return 0;
-    }
-
-    virtual Int_t CoarseTrack(TClonesArray&)
-    {
-        return 0;
-    }
-
-    virtual Int_t FineTrack(TClonesArray&)
-    {
-        return 0;
-    }
-
-    virtual EStatus Init(const TDatime&)
-    {
-        return fStatus = kOK;
-    };
+    virtual Int_t Decode(const THaEvData&);
+    virtual Int_t CoarseTrack(TClonesArray&);
+    virtual Int_t FineTrack(TClonesArray&);
+    virtual EStatus Init(const TDatime&);
 
 private:
     ClassDef(LOpticsOpt, 0) // HRS Optics Optimizer
@@ -252,20 +212,28 @@ private:
 class THaMatrixElement {
 public:
 
-    THaMatrixElement() : iszero(true), pw(3), order(0), v(0), poly(LOpticsOpt::kPORDER), OptOrder(0)
-    {
-    }
-    bool match(const THaMatrixElement& rhs) const;
+    THaMatrixElement();
 
-    bool iszero; // whether the element is zero
-    std::vector<int> pw; // exponents of matrix element
+    Bool_t match(const THaMatrixElement& rhs) const;
+
+    Bool_t iszero; // whether the element is zero
+    std::vector<Int_t> pw; // exponents of matrix element
     //   e.g. D100 = { 1, 0, 0 }
-    int order;
-    double v; // its computed value
-    std::vector<double> poly; // the associated polynomial
+    Int_t order;
+    Double_t v; // its computed value
+    std::vector<Double_t> poly; // the associated polynomial
 
     void SkimPoly(); //reduce order to highest non-zero poly
 
-    UInt_t OptOrder; //order optimize to
+    Int_t OptOrder; //order optimize to
 };
+
+inline Double_t LOpticsOpt::ScatMom(Double_t DM, Double_t Ma, Double_t P0, Double_t Theta)
+{
+    // Calc Scattered Electron Momentum
+    // Assuming Electron with P0, Scattering on a fix target of Mass Ma Assuming
+    // recoil system is a resonance of DM and scattering angle is Theta.
+    return (-DM * DM - 2 * Ma * DM + 2 * Ma * P0) / (2 * (Ma + P0 - P0 * TMath::Cos(Theta)));
+}
+
 #endif
