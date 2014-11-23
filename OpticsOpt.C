@@ -890,12 +890,12 @@ Double_t OpticsOpt::SumSquareDTh(Int_t UseFPOff)
             eventdata.Data[kRotPh] = rot[3];
 
             // calculate the powers we need
-            for (Int_t i = 0; i < kPreCalPow; i++) {
-                powers[i][0] = pow(rot[0], i);
-                powers[i][1] = pow(rot[1], i);
-                powers[i][2] = pow(rot[2], i);
-                powers[i][3] = pow(rot[3], i);
-                powers[i][4] = pow(TMath::Abs(rot[1]), i);
+            for (Int_t j = 0; j < kPreCalPow; j++) {
+                powers[j][0] = pow(rot[0], j);
+                powers[j][1] = pow(rot[1], j);
+                powers[j][2] = pow(rot[2], j);
+                powers[j][3] = pow(rot[3], j);
+                powers[j][4] = pow(TMath::Abs(rot[1]), j);
             }
         }
 
@@ -953,12 +953,12 @@ Double_t OpticsOpt::SumSquareDPhi(Int_t UseFPOff)
             eventdata.Data[kRotPh] = rot[3];
 
             // calculate the powers we need
-            for (Int_t i = 0; i < kPreCalPow; i++) {
-                powers[i][0] = pow(rot[0], i);
-                powers[i][1] = pow(rot[1], i);
-                powers[i][2] = pow(rot[2], i);
-                powers[i][3] = pow(rot[3], i);
-                powers[i][4] = pow(TMath::Abs(rot[1]), i);
+            for (Int_t j = 0; j < kPreCalPow; j++) {
+                powers[j][0] = pow(rot[0], j);
+                powers[j][1] = pow(rot[1], j);
+                powers[j][2] = pow(rot[2], j);
+                powers[j][3] = pow(rot[3], j);
+                powers[j][4] = pow(TMath::Abs(rot[1]), j);
             }
         }
 
@@ -1204,12 +1204,12 @@ Double_t OpticsOpt::SumSquareDY(Int_t UseFPOff)
             eventdata.Data[kRotPh] = rot[3];
 
             // calculate the powers we need
-            for (Int_t i = 0; i < kPreCalPow; i++) {
-                powers[i][0] = pow(rot[0], i);
-                powers[i][1] = pow(rot[1], i);
-                powers[i][2] = pow(rot[2], i);
-                powers[i][3] = pow(rot[3], i);
-                powers[i][4] = pow(TMath::Abs(rot[1]), i);
+            for (Int_t j = 0; j < kPreCalPow; j++) {
+                powers[j][0] = pow(rot[0], j);
+                powers[j][1] = pow(rot[1], j);
+                powers[j][2] = pow(rot[2], j);
+                powers[j][3] = pow(rot[3], j);
+                powers[j][4] = pow(TMath::Abs(rot[1]), j);
             }
         }
 
@@ -1260,16 +1260,16 @@ TList* OpticsOpt::CheckY(Int_t PlotType)
         if (targetfoils[i] < zmin) zmin = targetfoils[i];
         if (targetfoils[i] > zmax) zmax = targetfoils[i];
     }
-    Double_t ylimu = -zmin * TMath::Sin(HRSAngle) + 10e-3;
-    Double_t ylimd = -zmax * TMath::Sin(HRSAngle) - 10e-3;
+    Double_t ylimu = ((HRSAngle > 0) ? -zmin : -zmax) * TMath::Sin(HRSAngle) + 20e-3;
+    Double_t ylimd = ((HRSAngle > 0) ? -zmax : -zmin) * TMath::Sin(HRSAngle) - 20e-3;
 
     for (Int_t i = 0; i < NPlots; i++) {
         HTgY[i] = new TH1D(Form("DataSet%d", i), Form("Target Y for Kine #%d", i), 400, ylimd, ylimu);
-        HTgYReal[i] = new TH1D(Form("DataSet%d", i), Form("Target Y for Kine #%d", i), 400, ylimd, ylimu);
+        HTgYReal[i] = new TH1D(Form("DataSet%d_Real", i), Form("Target Y for Kine #%d", i), 400, ylimd, ylimu);
         HTgY[i]->SetXTitle("Target Y [m]");
         HTgYReal[i]->SetXTitle("Target Y [m]");
 
-        HTgYDiff[i] = new TH1D(Form("DataSet%d", i), Form("Diff of Target Y for Kine #%d", i), 200, -10e-3, 10e-3);
+        HTgYDiff[i] = new TH1D(Form("DataSet%d_Diff", i), Form("Diff of Target Y for Kine #%d", i), 200, -10e-3, 10e-3);
         HTgYDiff[i]->SetXTitle("Cal Y - Real Y [m]");
         assert(HTgY[i]); // assure memory allocation
         assert(HTgYDiff[i]);
@@ -1295,7 +1295,7 @@ TList* OpticsOpt::CheckY(Int_t PlotType)
         rmsy += (eventdata.Data[kCalcY] - eventdata.Data[kRealY])*(eventdata.Data[kCalcY] - eventdata.Data[kRealY]);
     }
 
-    DEBUG_INFO("CheckTgY", "dy = %f,\t rmsy = %f", dy / fNRawData, rmsy / fNRawData);
+    DEBUG_INFO("CheckY", "dy = %f,\t rmsy = %f", dy / fNRawData, rmsy / fNRawData);
 
     TCanvas *c1, *c2;
     Double_t w = 720, h = 480;
@@ -1337,7 +1337,8 @@ TList* OpticsOpt::CheckY(Int_t PlotType)
     }
 
     for (Int_t i = 0; i < NPlots; i++) {
-        c1->cd(i + 1);
+        if (NPlots > 1) c1->cd(i + 1);
+        else c1->cd();
 
         assert(HTgY[i]);
         HTgYReal[i]->SetLineColor(kRed);
@@ -1345,7 +1346,8 @@ TList* OpticsOpt::CheckY(Int_t PlotType)
         HTgY[i]->SetLineColor(kBlack);
         HTgY[i]->Draw("same");
 
-        c2->cd(i + 1);
+        if (NPlots > 1) c2->cd(i + 1);
+        else c2->cd();
 
         assert(HTgYDiff[i]);
         HTgYDiff[i]->Draw();
@@ -1525,12 +1527,12 @@ Double_t OpticsOpt::SumSquareDp(Int_t UseFPOff)
             eventdata.Data[kRotPh] = rot[3];
 
             // calculate the powers we need
-            for (Int_t i = 0; i < kPreCalPow; i++) {
-                powers[i][0] = pow(rot[0], i);
-                powers[i][1] = pow(rot[1], i);
-                powers[i][2] = pow(rot[2], i);
-                powers[i][3] = pow(rot[3], i);
-                powers[i][4] = pow(TMath::Abs(rot[1]), i);
+            for (Int_t j = 0; j < kPreCalPow; j++) {
+                powers[j][0] = pow(rot[0], j);
+                powers[j][1] = pow(rot[1], j);
+                powers[j][2] = pow(rot[2], j);
+                powers[j][3] = pow(rot[3], j);
+                powers[j][4] = pow(TMath::Abs(rot[1]), j);
             }
         }
 
@@ -1567,7 +1569,7 @@ Double_t OpticsOpt::SumSquareDp(Int_t UseFPOff)
     return rmsdp;
 }
 
-TList* OpticsOpt::CheckDp(Int_t PlotType)
+TList * OpticsOpt::CheckDp(Int_t PlotType)
 {
     // Visualize 1D hitogram of dp_kin
     assert(NKines <= 12);
@@ -1808,7 +1810,7 @@ THaMatrixElement::THaMatrixElement() : iszero(kTRUE), pw(3), order(0), v(0), pol
     // Nothing to be done
 }
 
-Bool_t THaMatrixElement::match(const THaMatrixElement& rhs) const
+Bool_t THaMatrixElement::match(const THaMatrixElement & rhs) const
 {
     // Compare coefficients of this matrix element to another
 
