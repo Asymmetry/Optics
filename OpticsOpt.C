@@ -1393,12 +1393,6 @@ void OpticsOpt::PrepareDp(void)
         printf("%f ", RadiationLossByFoil[FoilID]*1000);
     printf("}\n");
 
-    // print tilt angle
-    printf("TiltAngleBySetting[%d] (deg) = { ", NFoils * NKines);
-    for (Int_t i = 0; i < NFoils * NKines; i++)
-        printf("%f ", TiltAngle[i]*180.0 / TMath::Pi());
-    printf("}\n");
-
     Double_t scatang = 0;
     Double_t dpkinoff = 0, rmsdpkinoff = 0;
     Double_t exttargcorr_dp = 0, rms_exttargcorr_dp = 0;
@@ -1452,7 +1446,7 @@ void OpticsOpt::PrepareDp(void)
         DEBUG_MASSINFO("PrepareDp", "Reference Angle: th = %f,\t phi = %f", eventdata.Data[kRealTh], eventdata.Data[kRealPh]);
 
         TVector3 MomDirectionHCS = fTCSInHCS*MomDirectionTCS;
-        TVector3 BeamDirection(0, TMath::Tan(TiltAngle[KineID * NFoils + FoilID]), 1);
+        TVector3 BeamDirection(TMath::Tan(eventdata.Data[kBeamPh]), TMath::Tan(eventdata.Data[kBeamTh]), 1);
         const Double_t ScatteringAngle = BeamDirection.Angle(MomDirectionHCS);
         eventdata.Data[kScatterAngle] = ScatteringAngle;
         scatang += ScatteringAngle;

@@ -102,17 +102,19 @@ public:
         kDetPh = 4, // tr.d_ph
         kBeamE = 5, // Beam energy
         kBeamX = 6, // urb.x or rb.x
-        kBeamY = 7, // urb.y or rb.y
-        kSimX = 8,
-        kSimTh = 9,
-        kSimY = 10,
-        kSimPh = 11,
-        kSimOrTh = 12, // use this to calculate kSimDp
-        kSimOrPh = 13
+        kBeamTh = 7,
+        kBeamY = 8, // urb.y or rb.y
+        kBeamPh = 9, // urb.y or rb.y
+        kSimX = 10,
+        kSimTh = 11,
+        kSimY = 12,
+        kSimPh = 13,
+        kSimOrTh = 14, // use this to calculate kSimDp
+        kSimOrPh = 15
     };
 
     enum ExtraSieveIdx {
-        kRotX = 14, // tr.r_x
+        kRotX = 16, // tr.r_x
         kRotTh, // tr.r_th
         kRotY, // tr.r_y
         kRotPh, // tr.r_ph
