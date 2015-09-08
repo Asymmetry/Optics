@@ -256,7 +256,7 @@ Int_t OpticsOpt::LoadDataBase(TString DataBaseName)
         }
 
         // order optimize to
-        ME.OptOrder = atoi(line_spl[line_spl.size() - 1].c_str());
+        ME.OptOrder = strtol(line_spl[line_spl.size() - 1].c_str(), NULL, 16);
 
         // Don't bother with all-zero matrix elements
         if (ME.iszero) continue;
@@ -347,7 +347,7 @@ Int_t OpticsOpt::SaveDataBase(TString DataBaseName)
         for (; j < kPORDER; j++) {
             fprintf(file, " %13.6e", 0.0);
         }
-        fprintf(file, "  %d", m.OptOrder);
+        fprintf(file, "  %02x", m.OptOrder);
         fprintf(file, "\n");
     }
 
@@ -365,7 +365,7 @@ Int_t OpticsOpt::SaveDataBase(TString DataBaseName)
         for (; j < kPORDER; j++) {
             fprintf(file, " %13.6e", 0.0);
         }
-        fprintf(file, "  %d", m.OptOrder);
+        fprintf(file, "  %02x", m.OptOrder);
         fprintf(file, "\n");
     }
 
@@ -383,7 +383,7 @@ Int_t OpticsOpt::SaveDataBase(TString DataBaseName)
         for (; j < kPORDER; j++) {
             fprintf(file, " %13.6e", 0.0);
         }
-        fprintf(file, "  %d", m.OptOrder);
+        fprintf(file, "  %02x", m.OptOrder);
         fprintf(file, "\n");
     }
 
@@ -401,7 +401,7 @@ Int_t OpticsOpt::SaveDataBase(TString DataBaseName)
         for (; j < kPORDER; j++) {
             fprintf(file, " %13.6e", 0.0);
         }
-        fprintf(file, "  %d", m.OptOrder);
+        fprintf(file, "  %02x", m.OptOrder);
         fprintf(file, "\n");
     }
 
@@ -419,7 +419,7 @@ Int_t OpticsOpt::SaveDataBase(TString DataBaseName)
         for (; j < kPORDER; j++) {
             fprintf(file, " %13.6e", 0.0);
         }
-        fprintf(file, "  %d", m.OptOrder);
+        fprintf(file, "  %02x", m.OptOrder);
         fprintf(file, "\n");
     }
 
@@ -572,11 +572,11 @@ Int_t OpticsOpt::Matrix2Array(Double_t Array[], const std::vector<THaMatrixEleme
         const THaMatrixElement& m = Matrix[i];
         Int_t j;
         for (j = 0; (Int_t) j < m.order; j++) {
-            if (FreeParaFlag) FreeParaFlag[idx] = j < m.OptOrder ? kTRUE : kFALSE;
+            if (FreeParaFlag) FreeParaFlag[idx] = ((m.OptOrder >> j) & 0x1) == 1 ? kTRUE : kFALSE;
             Array[idx++] = m.poly[j];
         }
         for (; j < kPORDER; j++) {
-            if (FreeParaFlag) FreeParaFlag[idx] = j < m.OptOrder ? kTRUE : kFALSE;
+            if (FreeParaFlag) FreeParaFlag[idx] = ((m.OptOrder >> j) & 0x1) == 1 ? kTRUE : kFALSE;
             Array[idx++] = 0;
         }
     }
@@ -586,11 +586,11 @@ Int_t OpticsOpt::Matrix2Array(Double_t Array[], const std::vector<THaMatrixEleme
             const THaMatrixElement& m = fFPMatrixElems[i];
             Int_t j;
             for (j = 0; (Int_t) j < m.order; j++) {
-                if (FreeParaFlag) FreeParaFlag[idx] = j < m.OptOrder ? kTRUE : kFALSE;
+                if (FreeParaFlag) FreeParaFlag[idx] = ((m.OptOrder >> j) & 0x1) == 1 ? kTRUE : kFALSE;
                 Array[idx++] = m.poly[j];
             }
             for (; j < kPORDER; j++) {
-                if (FreeParaFlag) FreeParaFlag[idx] = j < m.OptOrder ? kTRUE : kFALSE;
+                if (FreeParaFlag) FreeParaFlag[idx] = ((m.OptOrder >> j) & 0x1) == 1 ? kTRUE : kFALSE;
                 Array[idx++] = 0;
             }
         }

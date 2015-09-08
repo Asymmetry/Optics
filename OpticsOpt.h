@@ -87,10 +87,10 @@ public:
 
     Int_t LoadRawData(TString DataFileName, Int_t NLoad = kMaxNRawData, Int_t MaxDataPerGroup = kMaxDataPerGroup); // load data to Rawdata[]
 
-    typedef struct {
+    struct EventData {
         Double_t Data[kMaxNEventData]; // [CommonIdx]
         Double_t powers[kPreCalPow][5]; // {(x), th, y, ph, abs(th) }
-    } EventData;
+    };
     EventData fRawData[kMaxNRawData]; // [fNRawData]
     Int_t fNRawData;
 
