@@ -101,16 +101,15 @@ public:
         kDetY = 3, // tr.d_y
         kDetPh = 4, // tr.d_ph
         kBeamE = 5, // Beam energy
-        kBeamX = 6, // urb.x or rb.x
-        kBeamTh = 7,
-        kBeamY = 8, // urb.y or rb.y
-        kBeamPh = 9, // urb.y or rb.y
-        kSimX = 10,
-        kSimTh = 11,
-        kSimY = 12,
-        kSimPh = 13,
-        kSimOrTh = 14, // use this to calculate kSimDp
-        kSimOrPh = 15
+        kBeamX = 6, // urb.x
+        kBeamTh = 7, // urb.t
+        kBeamY = 8, // urb.y
+        kBeamPh = 9, // urb.p
+        kSimX = 10, // proj.x
+        kSimTh = 11, // proj.t
+        kSimY = 12, // proj.y
+        kSimPh = 13, // proj.p
+        kSimDp = 14, // react.d
     };
 
     enum ExtraSieveIdx {

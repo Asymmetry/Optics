@@ -1420,11 +1420,13 @@ void OpticsOpt::PrepareDp(void)
         TVector3 MomDirectionTCS;
         Double_t x_tg;
 
+        const Double_t DM = ExcitationEnergy[KineID];
+        const Double_t Ma = GroundNuclearMass;
+        const Double_t P0 = eventdata.Data[kBeamE];
+        Double_t DpKinOffsets;
         if (TargetField) {
-            eventdata.Data[kRealTh] = eventdata.Data[kSimOrTh];
-            eventdata.Data[kRealPh] = eventdata.Data[kSimOrPh];
-
-            MomDirectionTCS.SetXYZ(eventdata.Data[kRealTh], eventdata.Data[kRealPh], 1);
+            DpKinOffsets = eventdata.Data[kSimDp] + 1 - ScatMom(DM, Ma, P0, TMath::Abs(HRSAngle)) / eventdata.Data[kCentralp];
+            eventdata.Data[kDpKinOffsets] = DpKinOffsets;
 
             x_tg = eventdata.Data[kSimX];
         } else {
@@ -1439,25 +1441,22 @@ void OpticsOpt::PrepareDp(void)
             eventdata.Data[kRealPh] = MomDirectionTCS.Y() / MomDirectionTCS.Z();
 
             x_tg = BeamSpotTCS.X() - BeamSpotTCS.Z() * eventdata.Data[kRealTh];
+
+            DEBUG_MASSINFO("PrepareDp", "Reference Angle: th = %f,\t phi = %f", eventdata.Data[kRealTh], eventdata.Data[kRealPh]);
+
+            TVector3 MomDirectionHCS = fTCSInHCS*MomDirectionTCS;
+            TVector3 BeamDirection(TMath::Tan(eventdata.Data[kBeamPh]), TMath::Tan(eventdata.Data[kBeamTh]), 1);
+            const Double_t ScatteringAngle = BeamDirection.Angle(MomDirectionHCS);
+            eventdata.Data[kScatterAngle] = ScatteringAngle;
+            scatang += ScatteringAngle;
+
+            // calculate difference between dp_kin and dp
+            // dp_kin + kDpKinOffsets = dp
+            DpKinOffsets = (ScatMom(DM, Ma, P0, ScatteringAngle) - ScatMom(DM, Ma, P0, TMath::Abs(HRSAngle))) / eventdata.Data[kCentralp];
+            eventdata.Data[kDpKinOffsets] = DpKinOffsets;
         }
 
         eventdata.Data[kRealX] = x_tg;
-
-        DEBUG_MASSINFO("PrepareDp", "Reference Angle: th = %f,\t phi = %f", eventdata.Data[kRealTh], eventdata.Data[kRealPh]);
-
-        TVector3 MomDirectionHCS = fTCSInHCS*MomDirectionTCS;
-        TVector3 BeamDirection(TMath::Tan(eventdata.Data[kBeamPh]), TMath::Tan(eventdata.Data[kBeamTh]), 1);
-        const Double_t ScatteringAngle = BeamDirection.Angle(MomDirectionHCS);
-        eventdata.Data[kScatterAngle] = ScatteringAngle;
-        scatang += ScatteringAngle;
-
-        // calculate difference between dp_kin and dp
-        // dp_kin + kDpKinOffsets = dp
-        const Double_t DM = ExcitationEnergy[KineID];
-        const Double_t Ma = GroundNuclearMass;
-        const Double_t P0 = eventdata.Data[kBeamE];
-        const Double_t DpKinOffsets = (ScatMom(DM, Ma, P0, ScatteringAngle) - ScatMom(DM, Ma, P0, TMath::Abs(HRSAngle))) / eventdata.Data[kCentralp];
-        eventdata.Data[kDpKinOffsets] = DpKinOffsets;
 
         dpkinoff += DpKinOffsets;
         rmsdpkinoff += DpKinOffsets*DpKinOffsets;
